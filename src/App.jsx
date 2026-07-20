@@ -37,7 +37,7 @@ const SANDBOX_STARTER = {
   js: 'console.log("¡A jugar!");\n',
 };
 
-const STUCK_THRESHOLD = 8; // ejecuciones seguidas sin avanzar objetivos
+const STUCK_IDLE_MS = 60000; // tiempo sin avanzar objetivos antes de ofrecer ayuda
 
 export default function App() {
   const { code, sandboxState, replaceCode } = useSandbox();
@@ -56,8 +56,6 @@ export default function App() {
   const [consoleHeight, setConsoleHeight] = useState(200);
 
   const prevIsComplete = useRef(false);
-  const lastCompletedRef = useRef(0);
-  const stuckStreakRef = useRef(0);
 
   const currentLesson = sandboxMode ? null : ALL_LESSONS[lessonIndex] ?? null;
   const currentCodeKey = sandboxMode ? SANDBOX_ID : currentLesson?.id;
@@ -93,8 +91,6 @@ export default function App() {
       replaceCode(SANDBOX_STARTER);
     }
     prevIsComplete.current = false;
-    lastCompletedRef.current = 0;
-    stuckStreakRef.current = 0;
     setStuckOpen(false);
   }, [currentCodeKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -111,22 +107,23 @@ export default function App() {
     checkObjective(sandboxState);
   }, [sandboxState, checkObjective, currentLesson]);
 
-  // Detectar "atasco": varias ejecuciones seguidas sin que avancen los
-  // objetivos de la lección actual, para ofrecer ayuda proactiva.
+  // Detectar "atasco": llevar un buen rato sin que avancen los objetivos de
+  // la lección actual, para ofrecer ayuda proactiva. Se mide en tiempo real
+  // sin progreso (no en cuántas veces se reevalúa el código al teclear):
+  // así no depende de cuánto código haya que escribir en cada lección, que
+  // es lo que antes hacía que esto casi nunca disparara en lecciones cortas
+  // y disparara de más en las que requieren teclear más.
   useEffect(() => {
-    if (!currentLesson) return;
-    if (completedCount > lastCompletedRef.current) {
-      lastCompletedRef.current = completedCount;
-      stuckStreakRef.current = 0;
-      return;
-    }
-    if (!sandboxState) return;
-    stuckStreakRef.current += 1;
-    if (stuckStreakRef.current >= STUCK_THRESHOLD) {
-      stuckStreakRef.current = 0;
-      setStuckOpen(true);
-    }
-  }, [completedCount, sandboxState, currentLesson]);
+    if (!currentLesson || isComplete) return;
+    const timer = setTimeout(() => setStuckOpen(true), STUCK_IDLE_MS);
+    return () => clearTimeout(timer);
+  }, [currentLesson, completedCount, isComplete]);
+
+  // Si la lección se completa, la ayuda de atasco no debe quedar abierta ni
+  // coincidir con el aviso de éxito.
+  useEffect(() => {
+    if (isComplete) setStuckOpen(false);
+  }, [isComplete]);
 
   // Avanza solo en la transición false → true (no al cargar la lección ya completa).
   useEffect(() => {
