@@ -18,7 +18,7 @@ const STEPS = [
   {
     icon: '👀',
     title: 'La vista previa, a la derecha',
-    text: 'Se actualiza sola mientras escribes. Y abajo tienes la Consola: ahí aparece todo lo que muestres con console.log().',
+    text: 'Pulsa "Ver en web" cuando quieras verla actualizada. Y abajo tienes la Consola: ahí aparece todo lo que muestres con console.log().',
   },
   {
     icon: '✅',

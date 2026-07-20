@@ -1,7 +1,7 @@
 # JSPlay
 
 Un editor para aprender HTML, CSS y JavaScript desde el navegador. Escribes código de
-verdad en tres pestañas, ves la vista previa actualizarse al instante, y avanzas por
+verdad en tres pestañas, pulsas "Ver en web" para ver el resultado, y avanzas por
 lecciones que validan lo que realmente construiste — no lo que crees que escribiste.
 
 La gracia es que todo corre en local, dentro de tu propio navegador: tu código se
@@ -11,7 +11,8 @@ errores a propósito o experimentar sin miedo. Si algo se lía, reinicias y ya.
 ## Qué tiene
 
 - Un editor con pestañas HTML / CSS / JavaScript y resaltado de sintaxis, más una
-  vista previa en vivo que se actualiza mientras escribes.
+  vista previa que se renderiza al pulsar "Ver en web" (así no muestra etiquetas a
+  medio escribir) y se actualiza sola al cambiar de lección o entrar al Sandbox.
 - Una consola que muestra tus `console.log()` y los errores de verdad, y que además
   funciona como mini-REPL: escribe una expresión y ejecútala contra tu código actual.
 - 13 lecciones del nivel básico, en dos módulos: maquetar una página con HTML y CSS
