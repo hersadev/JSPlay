@@ -4,6 +4,7 @@ import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { javascript } from '@codemirror/lang-javascript';
 import { useSandbox } from '../../hooks/useSandbox';
+import { useSandboxStore } from '../../store/sandboxStore';
 
 const TABS = [
   { key: 'html', label: 'HTML', ext: html() },
@@ -13,8 +14,15 @@ const TABS = [
 
 export default function CodeTabs() {
   const { code, setCode } = useSandbox();
+  const renderedCode = useSandboxStore((s) => s.renderedCode);
+  const requestRender = useSandboxStore((s) => s.requestRender);
   const [active, setActive] = useState('html');
   const tab = TABS.find((t) => t.key === active);
+
+  const isDirty =
+    code.html !== renderedCode.html ||
+    code.css !== renderedCode.css ||
+    code.js !== renderedCode.js;
 
   return (
     <div className="flex flex-col h-full bg-gray-900">
@@ -33,7 +41,7 @@ export default function CodeTabs() {
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative">
         <CodeMirror
           key={tab.key}
           value={code[tab.key]}
@@ -44,6 +52,20 @@ export default function CodeTabs() {
           basicSetup={{ tabSize: 2 }}
           style={{ height: '100%', fontSize: 13 }}
         />
+        <button
+          onClick={requestRender}
+          className={`absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-1.5 text-sm font-semibold rounded-full shadow-lg transition-colors ${
+            isDirty
+              ? 'bg-yellow-400 text-gray-900 hover:bg-yellow-300'
+              : 'bg-gray-800/90 text-gray-300 hover:bg-gray-700'
+          }`}
+          title="Renderiza tu código actual en la vista previa"
+        >
+          Ver en web
+          {isDirty && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
+          )}
+        </button>
       </div>
     </div>
   );
