@@ -1,9 +1,10 @@
-// Módulo 2 — Dale vida con JavaScript (8 lecciones)
+// Módulo 2 — Dale vida con JavaScript (9 lecciones)
 // Cada lección arranca con su propia mini página para centrarse en un
 // concepto: variables, condicionales, funciones, arrays, bucles, objetos,
 // y por último seleccionar y modificar el DOM.
 
 import {
+  attrNotEmpty,
   globalIsFunction,
   callFunction,
   consoleHasType,
@@ -12,22 +13,42 @@ import {
   sourceIncludes,
 } from '../_helpers';
 import {
-  L1_JS,
+  L1_HTML,
   L2_JS,
   L3_JS,
   L4_JS,
   L5_JS,
   L6_JS,
-  L7_HTML,
   L7_JS,
   L8_HTML,
-  L8_CSS,
   L8_JS,
+  L9_HTML,
+  L9_CSS,
+  L9_JS,
 } from './fixtures';
 
 export const module2 = [
   {
     id: 'm2-l1',
+    title: 'Cómo se enlaza un script',
+    description:
+      'En un proyecto real, el JavaScript vive en su propio archivo (`script.js`) y el HTML tiene que enlazarlo con `<script src="script.js"></script>`. En JSPlay, lo que escribas en la pestaña JavaScript se ejecuta solo — el editor enlaza ese archivo por ti para que puedas centrarte en aprender a programar sin repetir esta etiqueta cada vez. Antes de escribir tu primera línea de JS, añade esta etiqueta a tu HTML: es la que hace ese enlace posible fuera de aquí.',
+    objectives: [
+      {
+        label: 'Enlaza un script externo con <script src>',
+        validate: attrNotEmpty('script[src]', 'src'),
+      },
+    ],
+    hints: [
+      '<script src="script.js"></script>',
+      'Esta etiqueta no cambia nada aquí — apunta a un archivo que no existe en este editor — pero fuera de JSPlay es la que conecta tu HTML con tu JavaScript.',
+    ],
+    setupFiles: { html: L1_HTML, css: '', js: '' },
+    curiosity:
+      'Colocar el <script> justo antes de cerrar </body> no es capricho: si el navegador se topa con un <script> mientras aún está leyendo el HTML, para de construir la página hasta que termina de descargarlo y ejecutarlo — por eso ponerlo al final (o usar el atributo defer) evita que la página se quede en blanco mientras carga el JavaScript.',
+  },
+  {
+    id: 'm2-l2',
     title: 'Variables y tipos',
     description:
       'Una variable guarda un valor con un nombre para poder usarlo después: se declara con `let` (si va a cambiar) o `const` (si no). Los tipos más básicos son el texto (string, entre comillas), el número y el booleano (`true`/`false`). Declara una variable de cada tipo y muéstralas con `console.log()` — su salida aparece en el panel de Consola, abajo.',
@@ -41,12 +62,12 @@ export const module2 = [
       'let edad = 16; console.log(edad);',
       'const esFanDeJS = true; console.log(esFanDeJS);',
     ],
-    setupFiles: { html: '', css: '', js: L1_JS },
+    setupFiles: { html: '', css: '', js: L2_JS },
     curiosity:
       'JavaScript se creó en solo 10 días en mayo de 1995, obra de Brendan Eich en Netscape. Iba a llamarse Mocha, luego LiveScript, y acabó llamándose JavaScript por una decisión de marketing para aprovechar la fama de Java — aunque los dos lenguajes apenas tienen relación entre sí.',
   },
   {
-    id: 'm2-l2',
+    id: 'm2-l3',
     title: 'Operadores y condicionales',
     description:
       'Con operadores de comparación (`>=`, `===`...) construyes condiciones, y con `if`/`else` decides qué código se ejecuta según si esa condición es verdadera o falsa. Declara una variable `edad` y muestra en consola un mensaje distinto según si es mayor o menor de edad.',
@@ -58,12 +79,12 @@ export const module2 = [
       'let edad = 16;',
       'if (edad >= 18) { console.log("Eres mayor de edad"); } else { console.log("Eres menor de edad"); }',
     ],
-    setupFiles: { html: '', css: '', js: L2_JS },
+    setupFiles: { html: '', css: '', js: L3_JS },
     curiosity:
       'En JavaScript, "5" == 5 da true, pero "5" === 5 da false: el doble igual convierte los tipos antes de comparar, y el triple igual no. Por eso casi todas las guías de estilo recomiendan usar siempre === para evitar sorpresas.',
   },
   {
-    id: 'm2-l3',
+    id: 'm2-l4',
     title: 'Funciones',
     description:
       'Una función empaqueta código para reutilizarlo: recibe parámetros y puede devolver un resultado con `return`. Declara una función `saludar(nombre)` que devuelva un saludo que incluya ese nombre, y muéstrala en consola llamándola con algún nombre.',
@@ -82,12 +103,12 @@ export const module2 = [
       'function saludar(nombre) { return "Hola, " + nombre + "!"; }',
       'console.log(saludar("Ada"));',
     ],
-    setupFiles: { html: '', css: '', js: L3_JS },
+    setupFiles: { html: '', css: '', js: L4_JS },
     curiosity:
       'Una función declarada con "function nombre(){}" queda disponible en todo su ámbito desde el principio (hoisting): puedes llamarla en una línea anterior a donde la escribiste, porque el motor ya la registró entera al leer el archivo.',
   },
   {
-    id: 'm2-l4',
+    id: 'm2-l5',
     title: 'Arrays y sus métodos',
     description:
       'Un array guarda una lista ordenada de valores entre corchetes: `["rojo", "verde", "azul"]`. Crea un array con al menos 3 elementos y muéstralo en consola; después añade uno más con `.push()` y vuelve a mostrarlo.',
@@ -108,12 +129,12 @@ export const module2 = [
       'let colores = ["rojo", "verde", "azul"]; console.log(colores);',
       'colores.push("amarillo"); console.log(colores);',
     ],
-    setupFiles: { html: '', css: '', js: L4_JS },
+    setupFiles: { html: '', css: '', js: L5_JS },
     curiosity:
       'Los arrays de JavaScript no tienen un tipo fijo: puedes mezclar números, texto e incluso otros arrays en el mismo array, y su tamaño crece o encoge solo, sin que tengas que declararlo de antemano.',
   },
   {
-    id: 'm2-l5',
+    id: 'm2-l6',
     title: 'Bucles',
     description:
       'Un bucle repite código sin copiarlo y pegarlo a mano. `for (let i = 0; i < N; i++) { ... }` es el más clásico: inicializa un contador, comprueba una condición y avanza en cada vuelta. Usa un bucle para mostrar varios valores en consola.',
@@ -125,12 +146,12 @@ export const module2 = [
       { label: 'El bucle muestra al menos 3 valores en consola', validate: consoleCountAtLeast(3) },
     ],
     hints: ['for (let i = 1; i <= 5; i++) { console.log(i); }'],
-    setupFiles: { html: '', css: '', js: L5_JS },
+    setupFiles: { html: '', css: '', js: L6_JS },
     curiosity:
       'La sintaxis for (inicio; condición; paso) de JavaScript viene directamente de C, uno de los lenguajes más influyentes de la historia: apenas ha cambiado desde los años 70.',
   },
   {
-    id: 'm2-l6',
+    id: 'm2-l7',
     title: 'Objetos',
     description:
       'Un objeto agrupa datos relacionados en propiedades con nombre: `{ nombre: "Ada", edad: 30 }`. Dentro de un objeto también puedes definir métodos (funciones), que acceden a las demás propiedades con `this`. Crea un objeto `persona` con al menos dos propiedades y un método que devuelva un texto usando `this`, y muéstralo en consola.',
@@ -150,12 +171,12 @@ export const module2 = [
       'let persona = { nombre: "Ada", edad: 30, saludar() { return "Hola, soy " + this.nombre; } };',
       'console.log(persona); console.log(persona.saludar());',
     ],
-    setupFiles: { html: '', css: '', js: L6_JS },
+    setupFiles: { html: '', css: '', js: L7_JS },
     curiosity:
       'En JavaScript casi todo se comporta como un objeto, incluso los arrays y las funciones. Dentro de un método, this apunta al objeto que lo llamó — pero su valor puede cambiar según cómo se invoque la función, uno de los rincones que más confunde al empezar.',
   },
   {
-    id: 'm2-l7',
+    id: 'm2-l8',
     title: 'Selecciona el DOM',
     description:
       'El DOM es la representación de tu HTML que JavaScript puede leer y tocar. `document.querySelector("#id")` busca un elemento por su selector CSS. La página ya tiene un `<p id="mensaje">`: selecciónalo y muestra su texto en consola con `.textContent`.',
@@ -173,12 +194,12 @@ export const module2 = [
       'const mensaje = document.querySelector("#mensaje");',
       'console.log(mensaje.textContent);',
     ],
-    setupFiles: { html: L7_HTML, css: '', js: L7_JS },
+    setupFiles: { html: L8_HTML, css: '', js: L8_JS },
     curiosity:
       'querySelector acepta cualquier selector CSS válido, así que puedes usar la misma sintaxis para buscar un elemento en JavaScript que para darle estilos en una hoja CSS.',
   },
   {
-    id: 'm2-l8',
+    id: 'm2-l9',
     title: 'Modifica el DOM y eventos',
     description:
       'Un event listener ejecuta código cuando algo ocurre: `elemento.addEventListener("click", () => { ... })`. Dentro puedes cambiar `.textContent` para actualizar un texto, o `.classList.add("clase")` para aplicar estilos. Haz que, al pulsar el botón, el párrafo cambie de texto y se resalte con la clase "resaltado" (ya tiene estilos definidos en el CSS).',
@@ -207,7 +228,7 @@ export const module2 = [
       'const mensaje = document.querySelector("#mensaje");',
       'boton.addEventListener("click", () => { mensaje.textContent = "¡Hiciste click!"; mensaje.classList.add("resaltado"); });',
     ],
-    setupFiles: { html: L8_HTML, css: L8_CSS, js: L8_JS },
+    setupFiles: { html: L9_HTML, css: L9_CSS, js: L9_JS },
     curiosity:
       'addEventListener no solo detecta clics: hay eventos para el teclado, el scroll, cuando cambia el tamaño de la ventana o cuando se envía un formulario. Es el mismo mecanismo para todos — solo cambia el nombre del evento.',
   },

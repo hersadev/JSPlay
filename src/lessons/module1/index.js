@@ -1,4 +1,4 @@
-// Módulo 1 — Maqueta tu primera página (HTML + CSS, 5 lecciones)
+// Módulo 1 — Maqueta tu primera página (HTML + CSS, 6 lecciones)
 // Construyes una pequeña página de presentación personal, sin JavaScript
 // todavía: el objetivo es soltura con las etiquetas y el modelo de caja.
 
@@ -10,7 +10,17 @@ import {
   hasBackgroundColor,
   sourceIncludes,
 } from '../_helpers';
-import { L1_HTML, L2_HTML, L3_HTML, L3_CSS, L4_HTML, L4_CSS, L5_HTML, L5_CSS } from './fixtures';
+import {
+  L1_HTML,
+  L2_HTML,
+  L3_HTML,
+  L4_HTML,
+  L4_CSS,
+  L5_HTML,
+  L5_CSS,
+  L6_HTML,
+  L6_CSS,
+} from './fixtures';
 
 export const module1 = [
   {
@@ -59,6 +69,25 @@ export const module1 = [
   },
   {
     id: 'm1-l3',
+    title: 'Cómo se enlaza una hoja de estilos',
+    description:
+      'En un proyecto real, el CSS vive en su propio archivo (`styles.css`) y el HTML tiene que enlazarlo explícitamente con `<link rel="stylesheet" href="styles.css">`. En JSPlay verás que, a partir de la próxima lección, lo que escribas en la pestaña CSS se aplica solo — el editor enlaza ese archivo por ti para que puedas centrarte en aprender CSS sin repetir esta etiqueta cada vez. Añádela ahora a tu HTML: es la que hace ese enlace posible fuera de aquí.',
+    objectives: [
+      {
+        label: 'Enlaza una hoja de estilos externa con <link>',
+        validate: attrNotEmpty('link[rel="stylesheet"]', 'href'),
+      },
+    ],
+    hints: [
+      '<link rel="stylesheet" href="styles.css">',
+      'Esta etiqueta no cambia nada en la vista previa — apunta a un archivo que no existe aquí — pero fuera de JSPlay es la que conecta tu HTML con tu CSS.',
+    ],
+    setupFiles: { html: L3_HTML, css: '', js: '' },
+    curiosity:
+      'El atributo rel viene de "relationship": describe qué relación tiene el documento enlazado con la página actual. "stylesheet" no es la única opción — rel="icon" define el favicon de la pestaña, y rel="canonical" le dice a los buscadores cuál es la URL "oficial" cuando la misma página existe en varias direcciones.',
+  },
+  {
+    id: 'm1-l4',
     title: 'Selectores CSS y el modelo de caja',
     description:
       'CSS da estilo al HTML con reglas del tipo `selector { propiedad: valor; }`. Todo elemento es, por dentro, una caja con contenido, padding (espacio interior), border (borde) y margin (espacio exterior) — el "modelo de caja". Ponle un color de fondo a la página con `body { background-color: ...; }`, dale padding al párrafo y un borde a la imagen.',
@@ -78,12 +107,12 @@ export const module1 = [
       'p { padding: 12px; }',
       'img { border: 3px solid orange; }',
     ],
-    setupFiles: { html: L3_HTML, css: L3_CSS, js: '' },
+    setupFiles: { html: L4_HTML, css: L4_CSS, js: '' },
     curiosity:
       'Por defecto, el ancho de una caja en CSS NO incluye su padding ni su borde: se suman aparte. Por eso a veces un elemento con padding "se sale" de su contenedor — la propiedad box-sizing: border-box, usadísima en la práctica, cambia esa regla para que todo encaje como uno espera.',
   },
   {
-    id: 'm1-l4',
+    id: 'm1-l5',
     title: 'Layout con Flexbox',
     description:
       'Flexbox coloca varios elementos en fila o columna sin trucos raros: basta con `display: flex` en el contenedor. Ya tienes un `<nav class="menu">` con tres enlaces dentro, uno debajo de otro. Conviértelo en una barra horizontal con espacio entre los enlaces.',
@@ -102,12 +131,12 @@ export const module1 = [
       '.menu { display: flex; }',
       'Añade separación: .menu { display: flex; gap: 16px; }',
     ],
-    setupFiles: { html: L4_HTML, css: L4_CSS, js: '' },
+    setupFiles: { html: L5_HTML, css: L5_CSS, js: '' },
     curiosity:
       'Antes de que Flexbox se estandarizara (2009-2017), centrar una caja verticalmente en CSS era tan incordio que se convirtió en un chiste recurrente entre desarrolladores web. Con Flexbox, se resuelve con una sola línea: align-items: center.',
   },
   {
-    id: 'm1-l5',
+    id: 'm1-l6',
     title: 'Colores, tipografía y el toque final',
     description:
       'Ya casi tienes una página con buena pinta: solo falta rematarla. Define una tipografía para toda la página con `font-family` en `body`, dale un color de texto propio al `<h1>` y redondea las esquinas de la imagen con `border-radius`.',
@@ -132,7 +161,7 @@ export const module1 = [
       'h1 { color: #fabd2f; }',
       'img { border-radius: 12px; }',
     ],
-    setupFiles: { html: L5_HTML, css: L5_CSS, js: '' },
+    setupFiles: { html: L6_HTML, css: L6_CSS, js: '' },
     curiosity:
       'Hasta la llegada de border-radius con CSS3 (hacia 2010), conseguir esquinas redondeadas en la web implicaba recortar imágenes de fondo a medida para cada caja — un hack tan extendido que tenía nombre propio: "sliding doors".',
   },

@@ -19,12 +19,26 @@ export const L3_HTML = `<h1>Tu nombre</h1>
 </ul>
 <a href="https://developer.mozilla.org">Mi web favorita</a>
 <img src="https://picsum.photos/200/120" alt="Una imagen de ejemplo" />
-`;
 
-export const L3_CSS = `/* Dale color de fondo a la página y estilo a algunos elementos */
+<!-- Añade aquí el <link> a la hoja de estilos -->
 `;
 
 export const L4_HTML = `<h1>Tu nombre</h1>
+<p>Cuéntanos algo sobre ti.</p>
+<h2>Mis habilidades</h2>
+<ul>
+  <li>HTML</li>
+  <li>CSS</li>
+  <li>JavaScript</li>
+</ul>
+<a href="https://developer.mozilla.org">Mi web favorita</a>
+<img src="https://picsum.photos/200/120" alt="Una imagen de ejemplo" />
+`;
+
+export const L4_CSS = `/* Dale color de fondo a la página y estilo a algunos elementos */
+`;
+
+export const L5_HTML = `<h1>Tu nombre</h1>
 <p>Cuéntanos algo sobre ti.</p>
 
 <nav class="menu">
@@ -34,7 +48,7 @@ export const L4_HTML = `<h1>Tu nombre</h1>
 </nav>
 `;
 
-export const L4_CSS = `body {
+export const L5_CSS = `body {
   background-color: #1e1e2f;
   color: #ebdbb2;
 }
@@ -42,12 +56,12 @@ export const L4_CSS = `body {
 /* Convierte .menu en una fila con Flexbox */
 `;
 
-export const L5_HTML = `<h1>Tu nombre</h1>
+export const L6_HTML = `<h1>Tu nombre</h1>
 <p>Cuéntanos algo sobre ti.</p>
 <img src="https://picsum.photos/200/120" alt="Una imagen de ejemplo" />
 `;
 
-export const L5_CSS = `body {
+export const L6_CSS = `body {
   background-color: #1e1e2f;
   color: #ebdbb2;
 }
