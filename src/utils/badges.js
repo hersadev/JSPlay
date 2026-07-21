@@ -29,7 +29,7 @@ export const BADGES = [
     name: 'Domina Flexbox',
     description: 'Completa la lección de layout con Flexbox.',
     icon: '🤸',
-    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m1-l5'),
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m1-l8'),
   },
   {
     id: 'web-designer',
@@ -43,7 +43,7 @@ export const BADGES = [
     name: 'Primera función',
     description: 'Escribe y llama a tu primera función en JavaScript.',
     icon: '🧩',
-    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m2-l4'),
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m2-l6'),
   },
   {
     id: 'bug-free',
@@ -58,7 +58,7 @@ export const BADGES = [
     name: 'Manos en el DOM',
     description: 'Selecciona elementos del DOM con JavaScript.',
     icon: '🕹️',
-    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m2-l8'),
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m2-l12'),
   },
   // Hitos por nivel: el umbral es el nº de lecciones hasta terminar el
   // último módulo del nivel, calculado desde MODULES (se ajusta solo al

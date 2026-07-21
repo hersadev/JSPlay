@@ -15,13 +15,17 @@ errores a propósito o experimentar sin miedo. Si algo se lía, reinicias y ya.
   medio escribir) y se actualiza sola al cambiar de lección o entrar al Sandbox.
 - Una consola que muestra tus `console.log()` y los errores de verdad, y que además
   funciona como mini-REPL: escribe una expresión y ejecútala contra tu código actual.
-- 15 lecciones del nivel básico, en dos módulos: maquetar una página con HTML y CSS
-  (estructura, listas y enlaces, cómo se enlaza una hoja de estilos, el modelo de
-  caja, Flexbox, tipografía y color), y darle vida con JavaScript (cómo se enlaza un
-  script, variables, condicionales, funciones, arrays, bucles, objetos, y seleccionar
-  y modificar el DOM). Cada lección valida sus objetivos
-  mirando el resultado real — el DOM, los estilos aplicados o la consola — y trae
-  pistas por si te atascas.
+  Es plegable: se abre sola en las lecciones que la usan y se muestra u oculta con
+  un clic en su barra.
+- 23 lecciones del nivel básico pensadas para quien nunca ha programado: cada una
+  introduce un único concepto y lo explica desde cero. Dos módulos: maquetar una
+  página con HTML y CSS (etiquetas, listas, enlaces, imágenes, cómo se enlaza una
+  hoja de estilos, selectores, el modelo de caja, Flexbox, tipografía y color), y
+  darle vida con JavaScript (cómo se enlaza un script, la consola, variables,
+  booleanos, condicionales, funciones y parámetros, arrays, bucles, objetos y
+  métodos, y seleccionar y modificar el DOM con eventos). Cada lección valida sus
+  objetivos mirando el resultado real — el DOM, los estilos aplicados o la consola —
+  y trae pistas por si te atascas.
 - Un modo Sandbox para jugar libre, sin objetivos ni auto-avance.
 - Logros que se van desbloqueando, con el progreso guardado solo en tu navegador:
   cierras y sigues donde estabas.
