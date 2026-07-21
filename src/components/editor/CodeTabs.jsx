@@ -5,6 +5,7 @@ import { css } from '@codemirror/lang-css';
 import { javascript } from '@codemirror/lang-javascript';
 import { useSandbox } from '../../hooks/useSandbox';
 import { useSandboxStore } from '../../store/sandboxStore';
+import { syntaxErrorLinter } from './syntaxLinter';
 
 const TABS = [
   { key: 'html', label: 'HTML', ext: html() },
@@ -47,7 +48,7 @@ export default function CodeTabs() {
           value={code[tab.key]}
           height="100%"
           theme="dark"
-          extensions={[tab.ext]}
+          extensions={[tab.ext, syntaxErrorLinter]}
           onChange={(value) => setCode({ [tab.key]: value })}
           basicSetup={{ tabSize: 2 }}
           style={{ height: '100%', fontSize: 13 }}
