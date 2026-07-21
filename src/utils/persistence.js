@@ -1,9 +1,34 @@
+import { ALL_LESSONS, lessonIndexOf } from '../lessons';
+
 const CODE_KEY = 'jsplay:code';
 const CODE_LESSON_KEY = 'jsplay:codeLessonId';
 const LESSON_KEY = 'jsplay:lesson';
+const LESSON_ID_KEY = 'jsplay:lessonId';
 const LESSON_MAX_KEY = 'jsplay:lessonMax';
+const LESSON_MAX_ID_KEY = 'jsplay:lessonMaxId';
 const WELCOME_KEY = 'jsplay:welcomed';
 const BADGES_KEY = 'jsplay:badges';
+
+// La lección actual se guarda por id además de por índice numérico: si una
+// versión futura inserta o divide lecciones, el índice se desplaza pero el
+// id sigue apuntando a la misma lección. El índice queda como fallback para
+// guardados antiguos.
+const DONE_ID = '__done__'; // curso terminado (índice más allá de la última lección)
+
+function lessonIdAt(index) {
+  return ALL_LESSONS[index]?.id ?? DONE_ID;
+}
+
+function indexFromSaved(idKey, numericKey) {
+  const id = localStorage.getItem(idKey);
+  if (id === DONE_ID) return ALL_LESSONS.length;
+  if (id) {
+    const i = lessonIndexOf(id);
+    if (i >= 0) return i;
+  }
+  const n = Math.max(0, parseInt(localStorage.getItem(numericKey) ?? '0') || 0);
+  return Math.min(n, ALL_LESSONS.length);
+}
 
 // Bumpea la versión cuando cambia el esquema serializado del código guardado.
 const SCHEMA_VERSION = 1;
@@ -33,12 +58,15 @@ export function loadCode(lessonId) {
 }
 
 export function saveLessonIndex(index) {
-  try { localStorage.setItem(LESSON_KEY, String(index)); } catch (_) {}
+  try {
+    localStorage.setItem(LESSON_KEY, String(index));
+    localStorage.setItem(LESSON_ID_KEY, lessonIdAt(index));
+  } catch (_) {}
 }
 
 export function loadLessonIndex() {
   try {
-    return Math.max(0, parseInt(localStorage.getItem(LESSON_KEY) ?? '0') || 0);
+    return indexFromSaved(LESSON_ID_KEY, LESSON_KEY);
   } catch (_) {
     return 0;
   }
@@ -46,14 +74,21 @@ export function loadLessonIndex() {
 
 // Índice de la lección más avanzada alcanzada (para desbloquear en el selector).
 export function saveLessonMax(index) {
-  try { localStorage.setItem(LESSON_MAX_KEY, String(index)); } catch (_) {}
+  try {
+    localStorage.setItem(LESSON_MAX_KEY, String(index));
+    localStorage.setItem(LESSON_MAX_ID_KEY, lessonIdAt(index));
+  } catch (_) {}
 }
 
 export function loadLessonMax() {
   try {
-    const raw = localStorage.getItem(LESSON_MAX_KEY);
-    if (raw === null) return loadLessonIndex();
-    return Math.max(0, parseInt(raw) || 0);
+    if (
+      localStorage.getItem(LESSON_MAX_ID_KEY) === null &&
+      localStorage.getItem(LESSON_MAX_KEY) === null
+    ) {
+      return loadLessonIndex();
+    }
+    return indexFromSaved(LESSON_MAX_ID_KEY, LESSON_MAX_KEY);
   } catch (_) {
     return 0;
   }
@@ -64,7 +99,9 @@ export function clearProgress() {
     localStorage.removeItem(CODE_KEY);
     localStorage.removeItem(CODE_LESSON_KEY);
     localStorage.removeItem(LESSON_KEY);
+    localStorage.removeItem(LESSON_ID_KEY);
     localStorage.removeItem(LESSON_MAX_KEY);
+    localStorage.removeItem(LESSON_MAX_ID_KEY);
     localStorage.removeItem(WELCOME_KEY);
     localStorage.removeItem(BADGES_KEY);
   } catch (_) {}
@@ -106,7 +143,9 @@ export function exportProgress() {
       code: localStorage.getItem(CODE_KEY),
       codeLessonId: localStorage.getItem(CODE_LESSON_KEY),
       lesson: localStorage.getItem(LESSON_KEY),
+      lessonId: localStorage.getItem(LESSON_ID_KEY),
       lessonMax: localStorage.getItem(LESSON_MAX_KEY),
+      lessonMaxId: localStorage.getItem(LESSON_MAX_ID_KEY),
       badges: localStorage.getItem(BADGES_KEY),
     };
   } catch (_) {
@@ -126,7 +165,9 @@ export function importProgress(data) {
     set(CODE_KEY, data.code);
     set(CODE_LESSON_KEY, data.codeLessonId);
     set(LESSON_KEY, data.lesson);
+    set(LESSON_ID_KEY, data.lessonId);
     set(LESSON_MAX_KEY, data.lessonMax);
+    set(LESSON_MAX_ID_KEY, data.lessonMaxId);
     set(BADGES_KEY, data.badges);
     return true;
   } catch (_) {

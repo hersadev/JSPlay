@@ -56,6 +56,9 @@ export default function App() {
   const [leftWidth, setLeftWidth] = useState(320);
   const [rightWidth, setRightWidth] = useState(420);
   const [consoleHeight, setConsoleHeight] = useState(200);
+  // La consola solo se muestra desplegada donde aporta: lecciones marcadas
+  // con usesConsole y el sandbox. La barra del panel permite alternarla a mano.
+  const [consoleOpen, setConsoleOpen] = useState(false);
 
   const prevIsComplete = useRef(false);
   // Cuenta pulsaciones seguidas de "Ver en web" que no mejoraron el mejor
@@ -100,6 +103,7 @@ export default function App() {
     }
     prevIsComplete.current = false;
     setStuckOpen(false);
+    setConsoleOpen(sandboxMode || !!currentLesson?.usesConsole);
     stuckAttemptsRef.current = 0;
     bestCompletedRef.current = 0;
     lastHandledTickRef.current = manualRenderTick;
@@ -248,13 +252,15 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <ResizeHandle
-          orientation="horizontal"
-          onResize={(dy) => setConsoleHeight((h) => clampWidth(h - dy, 96, 480))}
-        />
+        {consoleOpen && (
+          <ResizeHandle
+            orientation="horizontal"
+            onResize={(dy) => setConsoleHeight((h) => clampWidth(h - dy, 96, 480))}
+          />
+        )}
 
-        <div style={{ height: consoleHeight }} className="flex-shrink-0">
-          <ConsolePanel />
+        <div style={consoleOpen ? { height: consoleHeight } : undefined} className="flex-shrink-0">
+          <ConsolePanel open={consoleOpen} onToggle={() => setConsoleOpen((o) => !o)} />
         </div>
       </div>
 

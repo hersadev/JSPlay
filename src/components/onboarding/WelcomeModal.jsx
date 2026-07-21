@@ -18,7 +18,7 @@ const STEPS = [
   {
     icon: '👀',
     title: 'La vista previa, a la derecha',
-    text: 'Pulsa "Ver en web" cuando quieras verla actualizada. Y abajo tienes la Consola: ahí aparece todo lo que muestres con console.log().',
+    text: 'Pulsa "Ver en web" cuando quieras verla actualizada. Abajo vive la Consola: se abre sola en las lecciones que la usan, y puedes mostrarla u ocultarla pulsando su barra.',
   },
   {
     icon: '✅',

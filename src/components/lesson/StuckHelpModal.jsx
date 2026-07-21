@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LessonObjective from './LessonObjective';
+import RichText from './RichText';
 
 // Modal de rescate: se abre solo cuando el jugador encadena varios errores
 // seguidos en la misma lección. Explica qué está pasando (la descripción de
@@ -57,7 +58,7 @@ export default function StuckHelpModal({ lesson, progress, onClose }) {
             <h3 className="text-xs font-semibold uppercase text-gray-500 tracking-wider">
               Qué está pasando en «{lesson.title}»
             </h3>
-            <p className="text-sm text-gray-300 leading-snug">{lesson.description}</p>
+            <RichText text={lesson.description} className="text-sm text-gray-300" />
           </div>
 
           <LessonObjective objectives={lesson.objectives} progress={progress} />

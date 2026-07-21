@@ -3,6 +3,7 @@ import LessonObjective from './LessonObjective';
 import HintSystem from './HintSystem';
 import ProgressBar from './ProgressBar';
 import Curiosity from './Curiosity';
+import RichText from './RichText';
 
 export default function LessonPanel({ lesson, lessonIndex, total, progress, isComplete }) {
   if (!lesson) {
@@ -34,7 +35,7 @@ export default function LessonPanel({ lesson, lessonIndex, total, progress, isCo
 
       <div>
         <h2 className="text-base font-semibold text-white leading-snug">{lesson.title}</h2>
-        <p className="text-gray-400 text-sm mt-1">{lesson.description}</p>
+        <RichText text={lesson.description} className="text-gray-400 text-sm mt-1.5" />
       </div>
 
       <LessonObjective objectives={lesson.objectives} progress={progress} />
