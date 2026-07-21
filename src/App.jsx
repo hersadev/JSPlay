@@ -152,8 +152,12 @@ export default function App() {
     const wasComplete = prevIsComplete.current;
     prevIsComplete.current = isComplete;
 
-    if (!isComplete || wasComplete || sandboxMode) return;
-    if (lessonIndex >= ALL_LESSONS.length) return;
+    if (!isComplete || wasComplete || sandboxMode || lessonIndex >= ALL_LESSONS.length) {
+      // Si el aviso quedó visible y su temporizador fue cancelado (p. ej. por
+      // cambiar de lección con el selector antes de que dispare), ocultarlo.
+      setShowSuccess(false);
+      return;
+    }
 
     setShowSuccess(true);
     const timer = setTimeout(() => {
