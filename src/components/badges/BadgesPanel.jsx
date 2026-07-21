@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { BADGES } from '../../utils/badges';
 
-export default function BadgesPanel({ earned, onClose }) {
-  const total = BADGES.length;
+// Recibe la colección de logros del nivel activo: cada nivel tiene la suya.
+export default function BadgesPanel({ badges, earned, onClose }) {
+  const total = badges.length;
   const got = earned.size;
 
   return (
@@ -37,7 +37,7 @@ export default function BadgesPanel({ earned, onClose }) {
         </header>
 
         <div className="overflow-y-auto p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {BADGES.map((b) => {
+          {badges.map((b) => {
             const got = earned.has(b.id);
             return (
               <div

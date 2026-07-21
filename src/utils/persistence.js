@@ -1,5 +1,9 @@
-import { ALL_LESSONS, lessonIndexOf } from '../lessons';
+import { LEVEL_LESSONS, DEFAULT_LEVEL } from '../lessons';
 
+// Cada nivel es una sección independiente: guarda su propia lección actual
+// y su máximo alcanzado. El nivel básico conserva las claves históricas
+// (sin sufijo) para no perder el progreso de guardados anteriores; los
+// demás niveles llevan la clave con ":<nivel>".
 const CODE_KEY = 'jsplay:code';
 const CODE_LESSON_KEY = 'jsplay:codeLessonId';
 const LESSON_KEY = 'jsplay:lesson';
@@ -7,28 +11,35 @@ const LESSON_ID_KEY = 'jsplay:lessonId';
 const LESSON_MAX_KEY = 'jsplay:lessonMax';
 const LESSON_MAX_ID_KEY = 'jsplay:lessonMaxId';
 const WELCOME_KEY = 'jsplay:welcomed';
-const BADGES_KEY = 'jsplay:badges';
 const PROFILE_KEY = 'jsplay:profile';
+const LEVEL_KEY = 'jsplay:level';
+
+const levelKey = (base, level) => (level === DEFAULT_LEVEL ? base : `${base}:${level}`);
 
 // La lección actual se guarda por id además de por índice numérico: si una
 // versión futura inserta o divide lecciones, el índice se desplaza pero el
 // id sigue apuntando a la misma lección. El índice queda como fallback para
 // guardados antiguos.
-const DONE_ID = '__done__'; // curso terminado (índice más allá de la última lección)
+const DONE_ID = '__done__'; // nivel terminado (índice más allá de la última lección)
 
-function lessonIdAt(index) {
-  return ALL_LESSONS[index]?.id ?? DONE_ID;
+function lessonsOf(level) {
+  return LEVEL_LESSONS[level] ?? [];
 }
 
-function indexFromSaved(idKey, numericKey) {
-  const id = localStorage.getItem(idKey);
-  if (id === DONE_ID) return ALL_LESSONS.length;
+function lessonIdAt(level, index) {
+  return lessonsOf(level)[index]?.id ?? DONE_ID;
+}
+
+function indexFromSaved(level, idKey, numericKey) {
+  const lessons = lessonsOf(level);
+  const id = localStorage.getItem(levelKey(idKey, level));
+  if (id === DONE_ID) return lessons.length;
   if (id) {
-    const i = lessonIndexOf(id);
+    const i = lessons.findIndex((l) => l.id === id);
     if (i >= 0) return i;
   }
-  const n = Math.max(0, parseInt(localStorage.getItem(numericKey) ?? '0') || 0);
-  return Math.min(n, ALL_LESSONS.length);
+  const n = Math.max(0, parseInt(localStorage.getItem(levelKey(numericKey, level)) ?? '0') || 0);
+  return Math.min(n, lessons.length);
 }
 
 // Bumpea la versión cuando cambia el esquema serializado del código guardado.
@@ -37,7 +48,8 @@ const SCHEMA_VERSION = 1;
 // El código en curso se guarda junto al id de la lección a la que pertenece:
 // así, si el jugador recarga a mitad de una lección, recupera justo lo que
 // tenía escrito; si ya avanzó a otra lección, se descarta y se siembra de
-// nuevo desde el setupFiles de la lección nueva.
+// nuevo desde el setupFiles de la lección nueva. Los ids de lección son
+// únicos entre niveles, así que un único hueco de guardado basta.
 export function saveCode(lessonId, code) {
   try {
     localStorage.setItem(CODE_KEY, JSON.stringify({ _v: SCHEMA_VERSION, code }));
@@ -58,38 +70,54 @@ export function loadCode(lessonId) {
   }
 }
 
-export function saveLessonIndex(index) {
+// Nivel (sección) activo.
+export function saveLevel(level) {
   try {
-    localStorage.setItem(LESSON_KEY, String(index));
-    localStorage.setItem(LESSON_ID_KEY, lessonIdAt(index));
+    localStorage.setItem(LEVEL_KEY, level);
   } catch (_) {}
 }
 
-export function loadLessonIndex() {
+export function loadLevel() {
   try {
-    return indexFromSaved(LESSON_ID_KEY, LESSON_KEY);
+    const level = localStorage.getItem(LEVEL_KEY);
+    return level && LEVEL_LESSONS[level] ? level : DEFAULT_LEVEL;
+  } catch (_) {
+    return DEFAULT_LEVEL;
+  }
+}
+
+export function saveLessonIndex(level, index) {
+  try {
+    localStorage.setItem(levelKey(LESSON_KEY, level), String(index));
+    localStorage.setItem(levelKey(LESSON_ID_KEY, level), lessonIdAt(level, index));
+  } catch (_) {}
+}
+
+export function loadLessonIndex(level) {
+  try {
+    return indexFromSaved(level, LESSON_ID_KEY, LESSON_KEY);
   } catch (_) {
     return 0;
   }
 }
 
 // Índice de la lección más avanzada alcanzada (para desbloquear en el selector).
-export function saveLessonMax(index) {
+export function saveLessonMax(level, index) {
   try {
-    localStorage.setItem(LESSON_MAX_KEY, String(index));
-    localStorage.setItem(LESSON_MAX_ID_KEY, lessonIdAt(index));
+    localStorage.setItem(levelKey(LESSON_MAX_KEY, level), String(index));
+    localStorage.setItem(levelKey(LESSON_MAX_ID_KEY, level), lessonIdAt(level, index));
   } catch (_) {}
 }
 
-export function loadLessonMax() {
+export function loadLessonMax(level) {
   try {
     if (
-      localStorage.getItem(LESSON_MAX_ID_KEY) === null &&
-      localStorage.getItem(LESSON_MAX_KEY) === null
+      localStorage.getItem(levelKey(LESSON_MAX_ID_KEY, level)) === null &&
+      localStorage.getItem(levelKey(LESSON_MAX_KEY, level)) === null
     ) {
-      return loadLessonIndex();
+      return loadLessonIndex(level);
     }
-    return indexFromSaved(LESSON_MAX_ID_KEY, LESSON_MAX_KEY);
+    return indexFromSaved(level, LESSON_MAX_ID_KEY, LESSON_MAX_KEY);
   } catch (_) {
     return 0;
   }
@@ -115,17 +143,15 @@ export function loadProfile() {
   }
 }
 
+// Borra TODO lo de JSPlay, de todos los niveles (código, progreso, logros,
+// perfil y nivel activo). Se recorre por prefijo para no olvidar claves
+// nuevas al añadir niveles.
 export function clearProgress() {
   try {
-    localStorage.removeItem(CODE_KEY);
-    localStorage.removeItem(CODE_LESSON_KEY);
-    localStorage.removeItem(LESSON_KEY);
-    localStorage.removeItem(LESSON_ID_KEY);
-    localStorage.removeItem(LESSON_MAX_KEY);
-    localStorage.removeItem(LESSON_MAX_ID_KEY);
-    localStorage.removeItem(WELCOME_KEY);
-    localStorage.removeItem(BADGES_KEY);
-    localStorage.removeItem(PROFILE_KEY);
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('jsplay:')) localStorage.removeItem(key);
+    }
   } catch (_) {}
 }
 
@@ -138,61 +164,59 @@ export function saveWelcomeSeen() {
   try { localStorage.setItem(WELCOME_KEY, '1'); } catch (_) {}
 }
 
-export function loadEarnedBadgeIds() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(BADGES_KEY) ?? '[]');
-    return Array.isArray(raw) ? raw : [];
-  } catch (_) {
-    return [];
-  }
-}
+const EXPORT_VERSION = 2;
 
-export function saveEarnedBadgeIds(ids) {
-  try { localStorage.setItem(BADGES_KEY, JSON.stringify(ids)); } catch (_) {}
-}
-
-const EXPORT_VERSION = 1;
-
-// Empaqueta todo el progreso (código, lección y logros) tal cual está en
-// localStorage para descargarlo como archivo. El progreso ya se auto-guarda;
-// esto permite además hacer copia de seguridad y llevarlo a otro navegador.
+// Empaqueta todo el progreso (código, lección, logros, perfil y nivel) tal
+// cual está en localStorage para descargarlo como archivo. Desde la versión
+// 2 se exporta cualquier clave con el prefijo jsplay:, así los niveles
+// nuevos viajan sin tener que enumerarlos.
 export function exportProgress() {
   try {
+    const entries = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('jsplay:')) entries[key] = localStorage.getItem(key);
+    }
     return {
       _app: 'jsplay',
       _export: EXPORT_VERSION,
       savedAt: new Date().toISOString(),
-      code: localStorage.getItem(CODE_KEY),
-      codeLessonId: localStorage.getItem(CODE_LESSON_KEY),
-      lesson: localStorage.getItem(LESSON_KEY),
-      lessonId: localStorage.getItem(LESSON_ID_KEY),
-      lessonMax: localStorage.getItem(LESSON_MAX_KEY),
-      lessonMaxId: localStorage.getItem(LESSON_MAX_ID_KEY),
-      badges: localStorage.getItem(BADGES_KEY),
-      profile: localStorage.getItem(PROFILE_KEY),
+      entries,
     };
   } catch (_) {
     return null;
   }
 }
 
-// Restaura un progreso exportado. Devuelve true si el archivo es válido.
+// Restaura un progreso exportado (formato actual con `entries` o el formato
+// 1, que enumeraba campos sueltos). Devuelve true si el archivo es válido.
 // El llamador debe recargar la app para que el store se reinicialice.
 export function importProgress(data) {
   try {
     if (!data || data._app !== 'jsplay') return false;
-    const set = (key, value) => {
+    if (data.entries && typeof data.entries === 'object') {
+      for (const [key, value] of Object.entries(data.entries)) {
+        if (key.startsWith('jsplay:') && typeof value === 'string') {
+          localStorage.setItem(key, value);
+        }
+      }
+      return true;
+    }
+    // Formato 1: campos sueltos, todos del nivel básico.
+    const legacy = {
+      [CODE_KEY]: data.code,
+      [CODE_LESSON_KEY]: data.codeLessonId,
+      [LESSON_KEY]: data.lesson,
+      [LESSON_ID_KEY]: data.lessonId,
+      [LESSON_MAX_KEY]: data.lessonMax,
+      [LESSON_MAX_ID_KEY]: data.lessonMaxId,
+      'jsplay:badges': data.badges,
+      [PROFILE_KEY]: data.profile,
+    };
+    for (const [key, value] of Object.entries(legacy)) {
       if (typeof value === 'string') localStorage.setItem(key, value);
       else localStorage.removeItem(key);
-    };
-    set(CODE_KEY, data.code);
-    set(CODE_LESSON_KEY, data.codeLessonId);
-    set(LESSON_KEY, data.lesson);
-    set(LESSON_ID_KEY, data.lessonId);
-    set(LESSON_MAX_KEY, data.lessonMax);
-    set(LESSON_MAX_ID_KEY, data.lessonMaxId);
-    set(BADGES_KEY, data.badges);
-    set(PROFILE_KEY, data.profile);
+    }
     return true;
   } catch (_) {
     return false;

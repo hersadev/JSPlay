@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { exportProgress, importProgress } from '../../utils/persistence';
+import { LEVELS, DEFAULT_LEVEL } from '../../lessons';
 import ConfirmDialog from '../ui/ConfirmDialog';
 
 export default function Header({
@@ -9,6 +10,8 @@ export default function Header({
   onToggleSandbox,
   onOpenBadges,
   sandboxMode,
+  level = DEFAULT_LEVEL,
+  onSwitchLevel,
   lessonIndex = 0,
   totalLessons = 0,
   earnedCount = 0,
@@ -63,10 +66,19 @@ export default function Header({
 
   const pct = totalLessons > 0 ? Math.round((lessonIndex / totalLessons) * 100) : 0;
 
+  const currentLevel = LEVELS.find((l) => l.id === level) ?? LEVELS[0];
+  const otherLevel = LEVELS.find((l) => l.id !== level);
+
   return (
     <header className="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-700 gap-6">
       <div className="flex items-center gap-4 min-w-0">
         <span className="text-white font-bold text-xl">JSPlay</span>
+        <span
+          className={`text-xs border rounded-full px-2 py-0.5 whitespace-nowrap ${currentLevel.chipClass}`}
+          title={currentLevel.tagline}
+        >
+          {currentLevel.icon} {currentLevel.name}
+        </span>
         {!sandboxMode && totalLessons > 0 && (
           <div
             className="flex items-center gap-2 min-w-[180px]"
@@ -87,6 +99,16 @@ export default function Header({
       </div>
 
       <nav className="flex items-center gap-5 text-gray-300 text-sm">
+        {otherLevel && (
+          <button
+            onClick={onSwitchLevel}
+            className="hover:text-white transition-colors flex items-center gap-1.5"
+            title={otherLevel.tagline}
+          >
+            <span>{otherLevel.icon}</span>
+            <span>{level === DEFAULT_LEVEL ? 'Ir al nivel medio' : 'Volver al básico'}</span>
+          </button>
+        )}
         <button onClick={onOpenLessons} className="hover:text-white transition-colors">
           Lecciones
         </button>

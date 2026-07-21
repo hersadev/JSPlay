@@ -1,15 +1,28 @@
 import { useEffect, useState } from 'react';
-import { BADGES, loadEarnedBadges, saveEarnedBadges, clearEarnedBadges } from '../utils/badges';
+import { BADGES_BY_LEVEL, loadEarnedBadges, saveEarnedBadges, clearEarnedBadges } from '../utils/badges';
 
-export function useBadges({ sandboxState, lessonIndex, totalLessons, isComplete }) {
-  const [earned, setEarned] = useState(() => loadEarnedBadges());
+// Logros del nivel activo. Cada nivel es una sección independiente con su
+// propia colección y almacenamiento; al cambiar de nivel se recargan los
+// ganados de ese nivel (reset síncrono durante el render, para no evaluar
+// nunca los checks de un nivel contra el estado del otro).
+export function useBadges({ level, sandboxState, lessonIndex, totalLessons, isComplete }) {
+  const [earned, setEarned] = useState(() => loadEarnedBadges(level));
   const [queue, setQueue] = useState([]); // logros recién ganados pendientes de anunciar
+  const [prevLevel, setPrevLevel] = useState(level);
+
+  if (level !== prevLevel) {
+    setPrevLevel(level);
+    setEarned(loadEarnedBadges(level));
+    setQueue([]);
+  }
+
+  const badges = BADGES_BY_LEVEL[level] ?? [];
 
   useEffect(() => {
     const ctx = { sandboxState, lessonIndex, totalLessons, isComplete };
     const newly = [];
     const next = new Set(earned);
-    for (const b of BADGES) {
+    for (const b of badges) {
       if (next.has(b.id)) continue;
       try {
         if (b.check(ctx)) {
@@ -22,19 +35,21 @@ export function useBadges({ sandboxState, lessonIndex, totalLessons, isComplete 
     }
     if (newly.length) {
       setEarned(next);
-      saveEarnedBadges(next);
+      saveEarnedBadges(level, next);
       setQueue((q) => [...q, ...newly]);
     }
-  }, [sandboxState, lessonIndex, totalLessons, isComplete, earned]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, sandboxState, lessonIndex, totalLessons, isComplete, earned]);
 
   function reset() {
-    clearEarnedBadges();
+    clearEarnedBadges(level);
     setEarned(new Set());
     setQueue([]);
   }
 
   return {
     earned,
+    badges,
     recent: queue[0] ?? null,
     reset,
     dismissRecent: () => setQueue((q) => q.slice(1)),

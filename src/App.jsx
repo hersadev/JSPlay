@@ -15,10 +15,11 @@ import { useSandbox } from './hooks/useSandbox';
 import { useSandboxStore } from './store/sandboxStore';
 import { useLessonProgress } from './hooks/useLessonProgress';
 import { useBadges } from './hooks/useBadges';
-import { BADGES } from './utils/badges';
 import {
   saveCode,
   loadCode,
+  saveLevel,
+  loadLevel,
   saveLessonIndex,
   loadLessonIndex,
   saveLessonMax,
@@ -30,7 +31,7 @@ import {
   loadProfile,
 } from './utils/persistence';
 import { extractProfile, applyProfile } from './utils/profile';
-import { ALL_LESSONS } from './lessons';
+import { LEVEL_LESSONS, DEFAULT_LEVEL } from './lessons';
 
 const clampWidth = (px, min, max) => Math.max(min, Math.min(max, px));
 
@@ -47,8 +48,15 @@ export default function App() {
   const { code, sandboxState, replaceCode } = useSandbox();
   const manualRenderTick = useSandboxStore((s) => s.manualRenderTick);
 
-  const [lessonIndex, setLessonIndex] = useState(() => loadLessonIndex());
-  const [maxReached, setMaxReached] = useState(() => Math.max(loadLessonIndex(), loadLessonMax()));
+  // Nivel (sección) activo: cada nivel tiene su secuencia de lecciones, su
+  // progreso y sus logros, y se puede saltar entre ellos con el botón de la
+  // cabecera retomando cada uno donde estaba.
+  const [level, setLevel] = useState(() => loadLevel());
+  const [lessonIndex, setLessonIndex] = useState(() => loadLessonIndex(loadLevel()));
+  const [maxReached, setMaxReached] = useState(() => {
+    const lvl = loadLevel();
+    return Math.max(loadLessonIndex(lvl), loadLessonMax(lvl));
+  });
   const [showSuccess, setShowSuccess] = useState(false);
   const [sandboxMode, setSandboxMode] = useState(false);
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -71,26 +79,28 @@ export default function App() {
   const bestCompletedRef = useRef(0);
   const lastHandledTickRef = useRef(0);
 
-  const currentLesson = sandboxMode ? null : ALL_LESSONS[lessonIndex] ?? null;
+  const LESSONS = LEVEL_LESSONS[level];
+  const currentLesson = sandboxMode ? null : LESSONS[lessonIndex] ?? null;
   const currentCodeKey = sandboxMode ? SANDBOX_ID : currentLesson?.id;
 
   const { completedCount, isComplete, checkObjective } = useLessonProgress(currentLesson);
 
-  const { earned, recent, reset: resetBadges, dismissRecent } = useBadges({
+  const { earned, badges, recent, reset: resetBadges, dismissRecent } = useBadges({
+    level,
     sandboxState,
     lessonIndex,
-    totalLessons: ALL_LESSONS.length,
+    totalLessons: LESSONS.length,
     isComplete,
   });
 
   // Persistir índice de lección y el máximo alcanzado (desbloqueo del selector).
   useEffect(() => {
-    saveLessonIndex(lessonIndex);
+    saveLessonIndex(level, lessonIndex);
     if (lessonIndex > maxReached) {
       setMaxReached(lessonIndex);
-      saveLessonMax(lessonIndex);
+      saveLessonMax(level, lessonIndex);
     }
-  }, [lessonIndex, maxReached]);
+  }, [level, lessonIndex, maxReached]);
 
   // Al entrar en una lección (o en el sandbox), recuperar el código que
   // hubiera guardado o, si no hay, sembrar el código de partida.
@@ -166,7 +176,7 @@ export default function App() {
     const wasComplete = prevIsComplete.current;
     prevIsComplete.current = isComplete;
 
-    if (!isComplete || wasComplete || sandboxMode || lessonIndex >= ALL_LESSONS.length) {
+    if (!isComplete || wasComplete || sandboxMode || lessonIndex >= LESSONS.length) {
       // Si el aviso quedó visible y su temporizador fue cancelado (p. ej. por
       // cambiar de lección con el selector antes de que dispare), ocultarlo.
       setShowSuccess(false);
@@ -176,15 +186,16 @@ export default function App() {
     setShowSuccess(true);
     const timer = setTimeout(() => {
       setShowSuccess(false);
-      setLessonIndex((i) => Math.min(i + 1, ALL_LESSONS.length));
+      setLessonIndex((i) => Math.min(i + 1, LESSONS.length));
     }, 2200);
 
     return () => clearTimeout(timer);
-  }, [isComplete, lessonIndex, sandboxMode]);
+  }, [isComplete, lessonIndex, sandboxMode, LESSONS.length]);
 
   function handleReset() {
     clearProgress();
     resetBadges();
+    setLevel(DEFAULT_LEVEL);
     setLessonIndex(0);
     setMaxReached(0);
     setSandboxMode(false);
@@ -192,7 +203,25 @@ export default function App() {
     setBadgesOpen(false);
     setStuckOpen(false);
     setWelcomeOpen(true);
-    replaceCode(ALL_LESSONS[0]?.setupFiles ?? { html: '', css: '', js: '' });
+    replaceCode(LEVEL_LESSONS[DEFAULT_LEVEL][0]?.setupFiles ?? { html: '', css: '', js: '' });
+  }
+
+  // Salta a la otra sección (básico ⇄ medio) retomando su progreso guardado.
+  function handleSwitchLevel() {
+    const next = level === DEFAULT_LEVEL ? 'medio' : DEFAULT_LEVEL;
+    // Invalidar el estado del sandbox AHORA, en el handler: el efecto de
+    // logros del nivel nuevo corre antes que el efecto que siembra el código
+    // (los efectos de useBadges se registran primero), y si viera la página
+    // del nivel anterior concedería logros falsos (p. ej. "Con estilo
+    // propio" con el CSS de partida del otro nivel).
+    useSandboxStore.getState().setSandboxState(null);
+    saveLevel(next);
+    setLevel(next);
+    setLessonIndex(loadLessonIndex(next));
+    setMaxReached(Math.max(loadLessonIndex(next), loadLessonMax(next)));
+    setSandboxMode(false);
+    setSelectorOpen(false);
+    setStuckOpen(false);
   }
 
   function handleCloseWelcome() {
@@ -219,10 +248,12 @@ export default function App() {
       onToggleSandbox={handleToggleSandbox}
       onOpenBadges={() => setBadgesOpen(true)}
       sandboxMode={sandboxMode}
-      lessonIndex={Math.min(lessonIndex, ALL_LESSONS.length)}
-      totalLessons={ALL_LESSONS.length}
+      level={level}
+      onSwitchLevel={handleSwitchLevel}
+      lessonIndex={Math.min(lessonIndex, LESSONS.length)}
+      totalLessons={LESSONS.length}
       earnedCount={earned.size}
-      totalBadges={BADGES.length}
+      totalBadges={badges.length}
     >
       <div style={{ width: leftWidth }} className="flex flex-shrink-0 [&>aside]:w-full">
         {sandboxMode ? (
@@ -241,7 +272,7 @@ export default function App() {
             key={currentLesson?.id}
             lesson={currentLesson}
             lessonIndex={lessonIndex}
-            total={ALL_LESSONS.length}
+            total={LESSONS.length}
             progress={completedCount}
             isComplete={isComplete}
           />
@@ -290,6 +321,7 @@ export default function App() {
 
       {selectorOpen && (
         <LessonSelector
+          level={level}
           currentIndex={lessonIndex}
           maxUnlockedIndex={maxReached}
           onSelect={handleSelectLesson}
@@ -298,7 +330,9 @@ export default function App() {
       )}
 
       <AnimatePresence>
-        {badgesOpen && <BadgesPanel earned={earned} onClose={() => setBadgesOpen(false)} />}
+        {badgesOpen && (
+          <BadgesPanel badges={badges} earned={earned} onClose={() => setBadgesOpen(false)} />
+        )}
       </AnimatePresence>
 
       <AnimatePresence>

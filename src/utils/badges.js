@@ -1,14 +1,20 @@
-// Definiciones de logros. Cada check recibe { sandboxState, lessonIndex, totalLessons, isComplete }
-// y devuelve true cuando el logro se desbloquea. Una vez ganado, useBadges ya
-// no lo vuelve a comprobar — así que un check puede depender del estado
-// "actual" del sandbox sin miedo a que se pierda al pasar a otra lección.
+// Definiciones de logros, separados por nivel: cada nivel es una sección
+// independiente con su propia colección y su propio almacenamiento.
+//
+// Cada check recibe { sandboxState, lessonIndex, totalLessons, isComplete }
+// — lessonIndex es el índice DENTRO del nivel activo — y devuelve true
+// cuando el logro se desbloquea. Una vez ganado, useBadges ya no lo vuelve
+// a comprobar, así que un check puede depender del estado "actual" del
+// sandbox sin miedo a que se pierda al pasar a otra lección.
 
-import { hasElement, textNotEmpty, noErrors } from '../lessons/_helpers';
-import { ALL_LESSONS, LEVELS, MODULES, lessonIndexOf } from '../lessons';
+import { hasElement, textNotEmpty, noErrors, sourceIncludes } from '../lessons/_helpers';
+import { LEVEL_LESSONS, lessonIndexInLevel } from '../lessons';
 
-const STORAGE_KEY = 'jsplay:badges';
+// El nivel básico conserva su clave histórica para no perder logros ya
+// ganados; los demás niveles llevan la clave con sufijo.
+const storageKey = (level) => (level === 'basico' ? 'jsplay:badges' : `jsplay:badges:${level}`);
 
-export const BADGES = [
+const BADGES_BASICO = [
   {
     id: 'first-page',
     name: 'Primera página',
@@ -29,21 +35,21 @@ export const BADGES = [
     name: 'Domina Flexbox',
     description: 'Completa la lección de layout con Flexbox.',
     icon: '🤸',
-    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m1-l8'),
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('basico', 'm1-l8'),
   },
   {
     id: 'web-designer',
     name: 'Diseñador web',
     description: 'Termina el módulo 1: tu primera página con HTML y CSS.',
     icon: '🖌️',
-    check: ({ lessonIndex }) => lessonIndex >= MODULES[0].lessons.length,
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('basico', 'm1-l9'),
   },
   {
     id: 'first-function',
     name: 'Primera función',
     description: 'Escribe y llama a tu primera función en JavaScript.',
     icon: '🧩',
-    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m2-l6'),
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('basico', 'm2-l6'),
   },
   {
     id: 'bug-free',
@@ -58,51 +64,107 @@ export const BADGES = [
     name: 'Manos en el DOM',
     description: 'Selecciona elementos del DOM con JavaScript.',
     icon: '🕹️',
-    check: ({ lessonIndex }) => lessonIndex > lessonIndexOf('m2-l12'),
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('basico', 'm2-l12'),
   },
-  // Hitos por nivel: el umbral es el nº de lecciones hasta terminar el
-  // último módulo del nivel, calculado desde MODULES (se ajusta solo al
-  // añadir niveles medio/avanzado más adelante).
-  ...LEVELS.map((lvl) => {
-    const lastModuleIdx = MODULES.reduce((acc, m, i) => (m.level === lvl.id ? i : acc), -1);
-    const threshold = MODULES.slice(0, lastModuleIdx + 1).reduce((n, mod) => n + mod.lessons.length, 0);
-    return {
-      id: `nivel-${lvl.id}`,
-      name: `${lvl.name} completado`,
-      description: `Termina las ${threshold} lecciones del ${lvl.name.toLowerCase()}.`,
-      icon: lvl.icon,
-      check: ({ lessonIndex }) => lessonIndex >= threshold,
-    };
-  }),
+  {
+    id: 'nivel-basico',
+    name: 'Nivel básico completado',
+    description: `Termina las ${LEVEL_LESSONS.basico.length} lecciones del nivel básico.`,
+    icon: '🥉',
+    check: ({ lessonIndex }) => lessonIndex >= LEVEL_LESSONS.basico.length,
+  },
   {
     id: 'graduate',
     name: 'Graduado',
-    description: `Completa las ${ALL_LESSONS.length} lecciones del curso.`,
+    description: `Completa las ${LEVEL_LESSONS.basico.length} lecciones del nivel básico.`,
     icon: '🎓',
     check: ({ lessonIndex, isComplete }) =>
-      lessonIndex >= ALL_LESSONS.length || (isComplete && lessonIndex >= ALL_LESSONS.length - 1),
+      lessonIndex >= LEVEL_LESSONS.basico.length ||
+      (isComplete && lessonIndex >= LEVEL_LESSONS.basico.length - 1),
   },
 ];
 
-export function loadEarnedBadges() {
+const BADGES_MEDIO = [
+  {
+    id: 'arquitecto',
+    name: 'Arquitecto web',
+    description: 'Estructura tu página con <header>, <main> y <footer>.',
+    icon: '🏛️',
+    check: ({ sandboxState }) =>
+      !!sandboxState &&
+      hasElement('header')(sandboxState) &&
+      hasElement('main')(sandboxState) &&
+      hasElement('footer')(sandboxState),
+  },
+  {
+    id: 'grid-master',
+    name: 'Maestro del Grid',
+    description: 'Coloca tu galería con CSS Grid.',
+    icon: '🧱',
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('medio', 'm3-l3'),
+  },
+  {
+    id: 'adaptable',
+    name: 'Se ve bien en el móvil',
+    description: 'Adapta tu web a pantallas estrechas con una media query.',
+    icon: '📱',
+    check: ({ sandboxState }) =>
+      !!sandboxState && sourceIncludes('css', /@media[^{]*\(\s*max-width/i)(sandboxState),
+  },
+  {
+    id: 'camaleon',
+    name: 'Camaleón',
+    description: 'Dale a tu web un interruptor de tema claro/oscuro.',
+    icon: '🌓',
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('medio', 'm3-l6'),
+  },
+  {
+    id: 'motor-de-datos',
+    name: 'Motor de datos',
+    description: 'Genera las tarjetas de tu galería desde un array de objetos.',
+    icon: '🗂️',
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('medio', 'm3-l7'),
+  },
+  {
+    id: 'memoria-de-elefante',
+    name: 'Memoria de elefante',
+    description: 'Haz que tu web recuerde al visitante con localStorage.',
+    icon: '💾',
+    check: ({ lessonIndex }) => lessonIndex > lessonIndexInLevel('medio', 'm3-l9'),
+  },
+  {
+    id: 'nivel-medio',
+    name: 'Nivel medio completado',
+    description: `Termina las ${LEVEL_LESSONS.medio.length} fases del proyecto.`,
+    icon: '🥈',
+    check: ({ lessonIndex }) => lessonIndex >= LEVEL_LESSONS.medio.length,
+  },
+];
+
+export const BADGES_BY_LEVEL = {
+  basico: BADGES_BASICO,
+  medio: BADGES_MEDIO,
+};
+
+export function loadEarnedBadges(level) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(level));
     const ids = raw ? JSON.parse(raw) : [];
-    const known = new Set(BADGES.map((b) => b.id));
+    const known = new Set((BADGES_BY_LEVEL[level] ?? []).map((b) => b.id));
     return new Set(ids.filter((id) => known.has(id)));
   } catch {
     return new Set();
   }
 }
 
-export function saveEarnedBadges(set) {
+export function saveEarnedBadges(level, set) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+    localStorage.setItem(storageKey(level), JSON.stringify([...set]));
   } catch {}
 }
 
-export function clearEarnedBadges() {
+export function clearEarnedBadges(level) {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(storageKey(level));
   } catch {}
 }

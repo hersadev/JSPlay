@@ -7,6 +7,8 @@ export default function MainLayout({
   onToggleSandbox,
   onOpenBadges,
   sandboxMode,
+  level,
+  onSwitchLevel,
   lessonIndex,
   totalLessons,
   earnedCount,
@@ -20,6 +22,8 @@ export default function MainLayout({
         onToggleSandbox={onToggleSandbox}
         onOpenBadges={onOpenBadges}
         sandboxMode={sandboxMode}
+        level={level}
+        onSwitchLevel={onSwitchLevel}
         lessonIndex={lessonIndex}
         totalLessons={totalLessons}
         earnedCount={earnedCount}
