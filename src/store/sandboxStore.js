@@ -23,10 +23,15 @@ export const useSandboxStore = create((set) => ({
   sandboxState: null,
   evalInSandbox: null,
 
+  // Al reemplazar el código se invalida también el sandboxState: el que hay
+  // pertenece a la página anterior, y evaluarlo contra la lección/los logros
+  // nuevos daría falsos positivos (p. ej. ganar "Primera página" nada más
+  // reiniciar, porque el h1 de la página vieja sigue en el estado).
   replaceCode: (code) =>
     set((s) => ({
       code: { html: code?.html ?? '', css: code?.css ?? '', js: code?.js ?? '' },
       codeRevision: s.codeRevision + 1,
+      sandboxState: null,
     })),
 
   setCode: (patch) => set((s) => ({ code: { ...s.code, ...patch } })),
