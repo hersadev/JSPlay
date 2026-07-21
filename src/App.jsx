@@ -12,6 +12,7 @@ import BadgeModal from './components/badges/BadgeModal';
 import StuckHelpModal from './components/lesson/StuckHelpModal';
 import WelcomeModal from './components/onboarding/WelcomeModal';
 import { useSandbox } from './hooks/useSandbox';
+import { useSandboxStore } from './store/sandboxStore';
 import { useLessonProgress } from './hooks/useLessonProgress';
 import { useBadges } from './hooks/useBadges';
 import { BADGES } from './utils/badges';
@@ -37,10 +38,11 @@ const SANDBOX_STARTER = {
   js: 'console.log("¡A jugar!");\n',
 };
 
-const STUCK_IDLE_MS = 60000; // tiempo sin avanzar objetivos antes de ofrecer ayuda
+const STUCK_ATTEMPT_THRESHOLD = 3; // pulsaciones seguidas de "Ver en web" sin avanzar antes de ofrecer ayuda
 
 export default function App() {
   const { code, sandboxState, replaceCode } = useSandbox();
+  const manualRenderTick = useSandboxStore((s) => s.manualRenderTick);
 
   const [lessonIndex, setLessonIndex] = useState(() => loadLessonIndex());
   const [maxReached, setMaxReached] = useState(() => Math.max(loadLessonIndex(), loadLessonMax()));
@@ -56,6 +58,12 @@ export default function App() {
   const [consoleHeight, setConsoleHeight] = useState(200);
 
   const prevIsComplete = useRef(false);
+  // Cuenta pulsaciones seguidas de "Ver en web" que no mejoraron el mejor
+  // recuento de objetivos alcanzado en la lección actual (ver efecto de
+  // detección de atasco, más abajo).
+  const stuckAttemptsRef = useRef(0);
+  const bestCompletedRef = useRef(0);
+  const lastHandledTickRef = useRef(0);
 
   const currentLesson = sandboxMode ? null : ALL_LESSONS[lessonIndex] ?? null;
   const currentCodeKey = sandboxMode ? SANDBOX_ID : currentLesson?.id;
@@ -92,6 +100,9 @@ export default function App() {
     }
     prevIsComplete.current = false;
     setStuckOpen(false);
+    stuckAttemptsRef.current = 0;
+    bestCompletedRef.current = 0;
+    lastHandledTickRef.current = manualRenderTick;
   }, [currentCodeKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Guardar el código en curso (con un pequeño debounce) bajo la lección actual.
@@ -101,23 +112,30 @@ export default function App() {
     return () => clearTimeout(t);
   }, [code, currentCodeKey]);
 
-  // Revalidar objetivos cada vez que cambia el resultado del sandbox.
+  // Revalidar objetivos cada vez que cambia el resultado del sandbox, y de
+  // paso detectar "atasco": si una pulsación de "Ver en web" (manualRenderTick
+  // sube) no mejora el mejor recuento de objetivos logrado hasta ahora en la
+  // lección, cuenta como intento fallido. Tras varios seguidos, se ofrece
+  // ayuda proactiva. No dispara por teclear ni por quedarse quieto pensando
+  // — solo por intentarlo de verdad y que no cuele.
   useEffect(() => {
     if (!currentLesson || !sandboxState) return;
-    checkObjective(sandboxState);
-  }, [sandboxState, checkObjective, currentLesson]);
+    const count = checkObjective(sandboxState);
 
-  // Detectar "atasco": llevar un buen rato sin que avancen los objetivos de
-  // la lección actual, para ofrecer ayuda proactiva. Se mide en tiempo real
-  // sin progreso (no en cuántas veces se reevalúa el código al teclear):
-  // así no depende de cuánto código haya que escribir en cada lección, que
-  // es lo que antes hacía que esto casi nunca disparara en lecciones cortas
-  // y disparara de más en las que requieren teclear más.
-  useEffect(() => {
-    if (!currentLesson || isComplete) return;
-    const timer = setTimeout(() => setStuckOpen(true), STUCK_IDLE_MS);
-    return () => clearTimeout(timer);
-  }, [currentLesson, completedCount, isComplete]);
+    if (count > bestCompletedRef.current) {
+      bestCompletedRef.current = count;
+      stuckAttemptsRef.current = 0;
+    } else if (manualRenderTick !== lastHandledTickRef.current) {
+      stuckAttemptsRef.current += 1;
+      if (stuckAttemptsRef.current >= STUCK_ATTEMPT_THRESHOLD) setStuckOpen(true);
+    }
+    lastHandledTickRef.current = manualRenderTick;
+    // manualRenderTick se lee aquí a propósito sin ser dependencia: solo debe
+    // procesarse cuando sandboxState cambia de verdad (una vez por render real),
+    // no en el instante en que sube el tick, que es antes de que el iframe
+    // termine de recargar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sandboxState, checkObjective, currentLesson]);
 
   // Si la lección se completa, la ayuda de atasco no debe quedar abierta ni
   // coincidir con el aviso de éxito.
