@@ -26,7 +26,10 @@ import {
   clearProgress,
   loadWelcomeSeen,
   saveWelcomeSeen,
+  saveProfile,
+  loadProfile,
 } from './utils/persistence';
+import { extractProfile, applyProfile } from './utils/profile';
 import { ALL_LESSONS } from './lessons';
 
 const clampWidth = (px, min, max) => Math.max(min, Math.min(max, px));
@@ -97,7 +100,10 @@ export default function App() {
     if (saved) {
       replaceCode(saved);
     } else if (currentLesson?.setupFiles) {
-      replaceCode(currentLesson.setupFiles);
+      // Sustituye los textos genéricos del código de partida (h1 "Tu nombre",
+      // párrafo de presentación) por lo que el jugador escribió en lecciones
+      // anteriores, para que su página siga siendo la suya.
+      replaceCode(applyProfile(currentLesson.setupFiles, loadProfile()));
     } else if (sandboxMode) {
       replaceCode(SANDBOX_STARTER);
     }
@@ -109,10 +115,18 @@ export default function App() {
     lastHandledTickRef.current = manualRenderTick;
   }, [currentCodeKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Guardar el código en curso (con un pequeño debounce) bajo la lección actual.
+  // Guardar el código en curso (con un pequeño debounce) bajo la lección
+  // actual. En el módulo 1, además, extraer del HTML el nombre y la
+  // presentación del jugador para reutilizarlos en lecciones posteriores.
   useEffect(() => {
     if (!currentCodeKey) return;
-    const t = setTimeout(() => saveCode(currentCodeKey, code), 300);
+    const t = setTimeout(() => {
+      saveCode(currentCodeKey, code);
+      if (currentCodeKey.startsWith('m1-')) {
+        const profile = extractProfile(code.html);
+        if (profile) saveProfile(profile);
+      }
+    }, 300);
     return () => clearTimeout(t);
   }, [code, currentCodeKey]);
 

@@ -8,6 +8,7 @@ const LESSON_MAX_KEY = 'jsplay:lessonMax';
 const LESSON_MAX_ID_KEY = 'jsplay:lessonMaxId';
 const WELCOME_KEY = 'jsplay:welcomed';
 const BADGES_KEY = 'jsplay:badges';
+const PROFILE_KEY = 'jsplay:profile';
 
 // La lección actual se guarda por id además de por índice numérico: si una
 // versión futura inserta o divide lecciones, el índice se desplaza pero el
@@ -94,6 +95,26 @@ export function loadLessonMax() {
   }
 }
 
+// Perfil del jugador (nombre y presentación extraídos de su HTML). Se guarda
+// mezclando con lo ya conocido: un campo solo se pisa si llega con valor.
+export function saveProfile(profile) {
+  try {
+    const merged = { ...loadProfile(), ...profile };
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(merged));
+  } catch (_) {}
+}
+
+export function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    return d && typeof d === 'object' ? d : null;
+  } catch (_) {
+    return null;
+  }
+}
+
 export function clearProgress() {
   try {
     localStorage.removeItem(CODE_KEY);
@@ -104,6 +125,7 @@ export function clearProgress() {
     localStorage.removeItem(LESSON_MAX_ID_KEY);
     localStorage.removeItem(WELCOME_KEY);
     localStorage.removeItem(BADGES_KEY);
+    localStorage.removeItem(PROFILE_KEY);
   } catch (_) {}
 }
 
@@ -147,6 +169,7 @@ export function exportProgress() {
       lessonMax: localStorage.getItem(LESSON_MAX_KEY),
       lessonMaxId: localStorage.getItem(LESSON_MAX_ID_KEY),
       badges: localStorage.getItem(BADGES_KEY),
+      profile: localStorage.getItem(PROFILE_KEY),
     };
   } catch (_) {
     return null;
@@ -169,6 +192,7 @@ export function importProgress(data) {
     set(LESSON_MAX_KEY, data.lessonMax);
     set(LESSON_MAX_ID_KEY, data.lessonMaxId);
     set(BADGES_KEY, data.badges);
+    set(PROFILE_KEY, data.profile);
     return true;
   } catch (_) {
     return false;
