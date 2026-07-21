@@ -1,8 +1,17 @@
-import { MODULES, LEVELS } from '../../lessons';
+import { MODULES, LEVELS, DEFAULT_LEVEL } from '../../lessons';
 
-export default function LessonSelector({ currentIndex, maxUnlockedIndex, onSelect, onClose }) {
+// Muestra solo las lecciones del nivel (sección) activo: los índices que
+// maneja son locales a ese nivel, igual que el progreso de App. Para ver
+// el otro nivel se cambia de sección con el botón de la cabecera.
+export default function LessonSelector({
+  level = DEFAULT_LEVEL,
+  currentIndex,
+  maxUnlockedIndex,
+  onSelect,
+  onClose,
+}) {
   let offset = 0;
-  const groups = MODULES.map((m) => {
+  const groups = MODULES.filter((m) => m.level === level).map((m) => {
     const items = m.lessons.map((l, i) => ({ ...l, globalIndex: offset + i }));
     offset += m.lessons.length;
     return { name: m.name, level: m.level, items };
