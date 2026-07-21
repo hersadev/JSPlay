@@ -13,6 +13,7 @@ const LESSON_MAX_ID_KEY = 'jsplay:lessonMaxId';
 const WELCOME_KEY = 'jsplay:welcomed';
 const PROFILE_KEY = 'jsplay:profile';
 const LEVEL_KEY = 'jsplay:level';
+const SANDBOX_STORAGE_KEY = 'jsplay:sandboxStorage';
 
 const levelKey = (base, level) => (level === DEFAULT_LEVEL ? base : `${base}:${level}`);
 
@@ -121,6 +122,28 @@ export function loadLessonMax(level) {
   } catch (_) {
     return 0;
   }
+}
+
+// Foto del localStorage simulado que ve el código del alumno dentro del
+// iframe de vista previa (ver STORAGE_POLYFILL en engine/sandboxRunner.js):
+// con el iframe en un origen opaco, el localStorage real no es accesible
+// desde ahí, así que el polyfill delega la persistencia aquí para que
+// sobreviva a recargar la vista previa (p. ej. la lección de "recuerda el
+// tema con localStorage"). Comparte prefijo jsplay: con el resto del
+// progreso, así que clearProgress() también la vacía.
+export function loadSandboxStorage() {
+  try {
+    const raw = localStorage.getItem(SANDBOX_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+export function persistSandboxStorage(obj) {
+  try {
+    localStorage.setItem(SANDBOX_STORAGE_KEY, JSON.stringify(obj));
+  } catch (_) {}
 }
 
 // Perfil del jugador (nombre y presentación extraídos de su HTML). Se guarda

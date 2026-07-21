@@ -91,7 +91,7 @@ export default function App() {
   const currentLesson = sandboxMode ? null : LESSONS[lessonIndex] ?? null;
   const currentCodeKey = sandboxMode ? SANDBOX_ID : currentLesson?.id;
 
-  const { completedCount, isComplete, checkObjective } = useLessonProgress(currentLesson);
+  const { completedCount, isComplete, checkObjective, warning } = useLessonProgress(currentLesson);
 
   const { earned, badges, recent, reset: resetBadges, dismissRecent } = useBadges({
     level,
@@ -156,20 +156,29 @@ export default function App() {
   // — solo por intentarlo de verdad y que no cuele.
   useEffect(() => {
     if (!currentLesson || !sandboxState) return;
-    const count = checkObjective(sandboxState);
-
-    if (count > bestCompletedRef.current) {
-      bestCompletedRef.current = count;
-      stuckAttemptsRef.current = 0;
-    } else if (manualRenderTick !== lastHandledTickRef.current) {
-      stuckAttemptsRef.current += 1;
-      if (stuckAttemptsRef.current >= STUCK_ATTEMPT_THRESHOLD) setStuckOpen(true);
-    }
-    lastHandledTickRef.current = manualRenderTick;
+    let cancelled = false;
+    // checkObjective es async (los validadores preguntan al iframe por
+    // postMessage, ver lessons/_helpers.js): si sandboxState vuelve a
+    // cambiar antes de que esta comprobación termine, se descarta su
+    // resultado en vez de aplicarlo con datos ya obsoletos.
+    checkObjective(sandboxState).then((count) => {
+      if (cancelled) return;
+      if (count > bestCompletedRef.current) {
+        bestCompletedRef.current = count;
+        stuckAttemptsRef.current = 0;
+      } else if (manualRenderTick !== lastHandledTickRef.current) {
+        stuckAttemptsRef.current += 1;
+        if (stuckAttemptsRef.current >= STUCK_ATTEMPT_THRESHOLD) setStuckOpen(true);
+      }
+      lastHandledTickRef.current = manualRenderTick;
+    });
     // manualRenderTick se lee aquí a propósito sin ser dependencia: solo debe
     // procesarse cuando sandboxState cambia de verdad (una vez por render real),
     // no en el instante en que sube el tick, que es antes de que el iframe
     // termine de recargar.
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sandboxState, checkObjective, currentLesson]);
 
@@ -290,6 +299,7 @@ export default function App() {
             total={LESSONS.length}
             progress={completedCount}
             isComplete={isComplete}
+            warning={warning}
           />
         )}
       </div>

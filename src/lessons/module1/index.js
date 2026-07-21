@@ -13,6 +13,7 @@ import {
   computedStyle,
   hasBackgroundColor,
   sourceIncludes,
+  tagInSection,
 } from '../_helpers';
 import {
   L1_HTML,
@@ -37,13 +38,15 @@ export const module1 = [
     description: [
       'Una página web, por dentro, es solo texto. Lo que hace que el navegador lo entienda son las etiquetas: marcas que envuelven cada trozo de contenido y le dicen qué es. Casi todas van en pareja: una de apertura como `<h1>` y una de cierre igual pero con barra, `</h1>`. Lo que pongas entre ambas es el contenido.',
       'Hoy usarás dos: `<h1>`, el título principal de la página (solo debería haber uno), y `<p>`, un párrafo de texto normal.',
-      'Escribe en la pestaña HTML un `<h1>` con tu nombre y, debajo, un `<p>` presentándote. Cuando lo tengas, pulsa el botón «Ver en web» para ver tu página en la vista previa de la derecha.',
+      'Fíjate en el HTML que ya trae la pestaña: `<html>` envuelve la página entera, dentro `<head>` guarda información que no se ve (por ahora solo el `<title>`, el texto de la pestaña del navegador) y `<body>` contiene todo lo visible. Es el esqueleto de cualquier página real — de momento solo vas a escribir dentro del `<body>`, pero conviene que le vayas cogiendo la forma.',
+      'Escribe dentro del `<body>` un `<h1>` con tu nombre y, debajo, un `<p>` presentándote. Cuando lo tengas, pulsa el botón «Ver en web» para ver tu página en la vista previa de la derecha.',
     ].join('\n\n'),
     objectives: [
       { label: 'Escribe un título <h1> con tu nombre', validate: textNotEmpty('h1') },
       { label: 'Escribe un párrafo <p> presentándote', validate: textNotEmpty('p') },
     ],
     hints: [
+      'Escribe entre las líneas <body> y </body> que ya están ahí — ese es el sitio de todo lo visible.',
       'Las etiquetas van en pareja: abres con <h1>, escribes tu texto y cierras con </h1> (la misma con una barra).',
       'Escribe: <h1>Tu nombre</h1>',
       'Debajo, en otra línea: <p>Hola, estoy aprendiendo a hacer páginas web.</p>',
@@ -121,18 +124,27 @@ export const module1 = [
     description: [
       'Tu página ya tiene estructura, pero el aspecto — colores, tamaños, tipografías — es el que trae el navegador de serie. De cambiarlo se encarga otro lenguaje: CSS. En la próxima lección lo escribirás; en esta aprenderás cómo se conecta con tu HTML.',
       'En un proyecto real el CSS vive en su propio archivo (por ejemplo `styles.css`) y el HTML lo enlaza con la etiqueta `<link rel="stylesheet" href="styles.css">`. Sin esa línea, el navegador ni se entera de que tu CSS existe.',
-      'En JSPlay lo que escribas en la pestaña CSS se aplica solo — el editor pone ese enlace por ti — pero fuera de aquí tendrás que escribirlo tú. Añádelo ahora a tu HTML para que se te quede grabado.',
+      'Aquí es donde el `<head>` deja de ser un cajón vacío: el `<link>` es información sobre la página (qué estilos usar), no contenido que se vea, así que va dentro de `<head>` — nunca en el `<body>`, con el resto del texto e imágenes.',
+      'En JSPlay lo que escribas en la pestaña CSS se aplica solo — el editor pone ese enlace por ti — pero fuera de aquí tendrás que escribirlo tú, y dentro de `<head>`. Añádelo ahora a tu HTML para que se te quede grabado.',
     ].join('\n\n'),
     objectives: [
       {
-        label: 'Enlaza una hoja de estilos externa con <link>',
-        validate: attrNotEmpty('link[rel="stylesheet"]', 'href'),
+        label: 'Enlaza una hoja de estilos externa con <link> dentro de <head>',
+        validate: async (s) =>
+          (await attrNotEmpty('link[rel="stylesheet"]', 'href')(s)) &&
+          (await tagInSection(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/i, 'head')(s)),
+        warn: async (s) => {
+          if (!(await attrNotEmpty('link[rel="stylesheet"]', 'href')(s))) return null;
+          if (await tagInSection(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/i, 'head')(s)) return null;
+          return 'Tu <link> está fuera de <head>. Muévelo dentro de las líneas <head> y </head>.';
+        },
       },
     ],
     hints: [
-      'La etiqueta <link> no tiene cierre y suele ir al principio del documento.',
+      'La etiqueta <link> no tiene cierre y va dentro de <head>, no del <body>.',
       '<link rel="stylesheet" href="styles.css">',
-      'No verás ningún cambio en la vista previa — apunta a un archivo que aquí no existe — pero el objetivo se marcará igualmente.',
+      'Escríbela entre las líneas <head> y </head> que ya trae tu HTML.',
+      'No verás ningún cambio en la vista previa — apunta a un archivo que aquí no existe — pero el objetivo se marcará igualmente, siempre que esté en el sitio correcto.',
     ],
     setupFiles: { html: L5_HTML, css: '', js: '' },
     curiosity:
@@ -235,9 +247,9 @@ export const module1 = [
       },
       {
         label: 'Dale un color de texto propio al <h1>',
-        validate: (s) =>
-          sourceIncludes('css', /h1\s*{[^}]*color\s*:/i)(s) &&
-          computedStyle('h1', 'color', (v) => v !== 'rgb(0, 0, 0)')(s),
+        validate: async (s) =>
+          (await sourceIncludes('css', /h1\s*{[^}]*color\s*:/i)(s)) &&
+          (await computedStyle('h1', 'color', (v) => v !== 'rgb(0, 0, 0)')(s)),
       },
       {
         label: 'Redondea las esquinas de la imagen con border-radius',

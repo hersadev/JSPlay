@@ -221,9 +221,9 @@ export const module3 = [
       },
       {
         label: 'Se crean con createElement en un bucle',
-        validate: (s) =>
-          sourceIncludes('js', /for\s*(\(|\s)|forEach/)(s) &&
-          sourceIncludes('js', 'createElement')(s),
+        validate: async (s) =>
+          (await sourceIncludes('js', /for\s*(\(|\s)|forEach/)(s)) &&
+          (await sourceIncludes('js', 'createElement')(s)),
       },
       { label: 'Sin errores en la consola', validate: noErrors },
     ],
