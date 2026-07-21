@@ -9,6 +9,18 @@
 
 import { NOMBRE_GENERICO, PRESENTACION_GENERICA } from '../../utils/profile';
 
+// Igual que en los módulos 1 y 2, cada fixture es un documento completo:
+// <html>, <head> (con <title>) y <body> con el proyecto dentro.
+const PAGE = (body) => `<html>
+<head>
+  <title>Mi página</title>
+</head>
+<body>
+${body}
+</body>
+</html>
+`;
+
 // ── Bloques de HTML que se repiten entre fixtures ──────────────────────
 
 const CABECERA = `<header class="cabecera">
@@ -156,7 +168,7 @@ const CABECERA_CON_BOTON = CABECERA.replace(
 // ── Fixtures por lección ───────────────────────────────────────────────
 
 // L1 — Estructura semántica: el contenido llega "plano" y hay que envolverlo.
-export const L1_HTML = `<!-- Este contenido funciona, pero es un montón de piezas sueltas.
+export const L1_HTML = PAGE(`<!-- Este contenido funciona, pero es un montón de piezas sueltas.
      Envuelve el título y el menú en <header>, las secciones en <main>
      y la última línea en un <footer>. -->
 
@@ -173,18 +185,18 @@ export const L1_HTML = `<!-- Este contenido funciona, pero es un montón de piez
 </section>
 
 <p>Hecho con JSPlay</p>
-`;
+`);
 
 export const L1_CSS = `${CSS_BASE}
 `;
 
 // L2 — Contenedor centrado
-export const L2_HTML = `${CABECERA}
+export const L2_HTML = PAGE(`${CABECERA}
 <main>
 ${INICIO}
 </main>
 ${PIE}
-`;
+`);
 
 export const L2_CSS = `${CSS_BASE}
 
@@ -192,13 +204,13 @@ export const L2_CSS = `${CSS_BASE}
 `;
 
 // L3 — Galería con Grid
-export const L3_HTML = `${CABECERA}
+export const L3_HTML = PAGE(`${CABECERA}
 <main>
 ${INICIO}
 ${GALERIA_ESTATICA}
 </main>
 ${PIE}
-`;
+`);
 
 export const L3_CSS = `${CSS_BASE}
 
@@ -254,13 +266,13 @@ export const L6_JS = `// Añade el botón #tema en el HTML y haz que al hacer cl
 `;
 
 // L7 — Datos en un array: la galería se vacía y se rellena desde JS
-export const L7_HTML = `${CABECERA_CON_BOTON}
+export const L7_HTML = PAGE(`${CABECERA_CON_BOTON}
 <main>
 ${INICIO}
 ${GALERIA_VACIA}
 </main>
 ${PIE}
-`;
+`);
 
 export const L7_CSS = L6_CSS;
 
@@ -276,14 +288,14 @@ const PROYECTOS = [
 `;
 
 // L8 — Formulario de contacto
-export const L8_HTML = `${CABECERA_CON_BOTON}
+export const L8_HTML = PAGE(`${CABECERA_CON_BOTON}
 <main>
 ${INICIO}
 ${GALERIA_VACIA}
 ${CONTACTO}
 </main>
 ${PIE}
-`;
+`);
 
 export const L8_CSS = L6_CSS;
 

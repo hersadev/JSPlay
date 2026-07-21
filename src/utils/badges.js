@@ -20,8 +20,8 @@ const BADGES_BASICO = [
     name: 'Primera página',
     description: 'Muestra tu primer <h1> con texto en la vista previa.',
     icon: '📄',
-    check: ({ sandboxState }) =>
-      !!sandboxState && hasElement('h1')(sandboxState) && textNotEmpty('h1')(sandboxState),
+    check: async ({ sandboxState }) =>
+      !!sandboxState && (await hasElement('h1')(sandboxState)) && (await textNotEmpty('h1')(sandboxState)),
   },
   {
     id: 'stylist',
@@ -90,11 +90,11 @@ const BADGES_MEDIO = [
     name: 'Arquitecto web',
     description: 'Estructura tu página con <header>, <main> y <footer>.',
     icon: '🏛️',
-    check: ({ sandboxState }) =>
+    check: async ({ sandboxState }) =>
       !!sandboxState &&
-      hasElement('header')(sandboxState) &&
-      hasElement('main')(sandboxState) &&
-      hasElement('footer')(sandboxState),
+      (await hasElement('header')(sandboxState)) &&
+      (await hasElement('main')(sandboxState)) &&
+      (await hasElement('footer')(sandboxState)),
   },
   {
     id: 'grid-master',

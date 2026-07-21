@@ -38,13 +38,13 @@ export default function ConsolePanel({ open = true, onToggle }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [logLines.length, errors.length, replLines.length]);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const expr = input.trim();
     if (!expr || !evalInSandbox) return;
-    const result = evalInSandbox(expr);
-    setReplLines((lines) => [...lines, { expr, ...result }]);
     setInput('');
+    const result = await evalInSandbox(expr);
+    setReplLines((lines) => [...lines, { expr, ...result }]);
   }
 
   const isEmpty = logLines.length === 0 && errors.length === 0 && replLines.length === 0;

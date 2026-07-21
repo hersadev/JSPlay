@@ -16,6 +16,7 @@ import {
   consoleHasValue,
   consoleCountAtLeast,
   sourceIncludes,
+  tagInSection,
 } from '../_helpers';
 import {
   L1_HTML,
@@ -54,18 +55,26 @@ export const module2 = [
     title: 'Cómo se enlaza un script',
     description: [
       'Con HTML y CSS tu página se ve bien, pero no hace nada: no reacciona, no calcula, no cambia. Para eso está JavaScript, el tercer lenguaje de la web y el primero «de programación» que vas a usar: sirve para darle instrucciones al navegador.',
-      'Igual que el CSS, el JavaScript vive en su propio archivo (`script.js`) y el HTML tiene que enlazarlo, esta vez con la etiqueta `<script src="script.js"></script>`, normalmente justo antes de cerrar `</body>`.',
-      'En JSPlay la pestaña JavaScript se ejecuta sola — el editor enlaza ese archivo por ti — pero fuera de aquí esta etiqueta es imprescindible. Añádela a tu HTML antes de escribir tu primera línea de código.',
+      'Igual que el CSS, el JavaScript vive en su propio archivo (`script.js`) y el HTML tiene que enlazarlo, esta vez con la etiqueta `<script src="script.js"></script>`, normalmente justo antes de cerrar `</body>` — no en el `<head>`, como el `<link>` del CSS: un script se coloca al final para que el navegador termine de construir la página antes de ejecutarlo.',
+      'En JSPlay la pestaña JavaScript se ejecuta sola — el editor enlaza ese archivo por ti — pero fuera de aquí esta etiqueta es imprescindible. Añádela dentro del `<body>`, justo antes de `</body>`.',
     ].join('\n\n'),
     objectives: [
       {
-        label: 'Enlaza un script externo con <script src>',
-        validate: attrNotEmpty('script[src]', 'src'),
+        label: 'Enlaza un script externo con <script src> al final del <body>',
+        validate: async (s) =>
+          (await attrNotEmpty('script[src]', 'src')(s)) &&
+          (await tagInSection(/<script\b[^>]*\bsrc=/i, 'body')(s)),
+        warn: async (s) => {
+          if (!(await attrNotEmpty('script[src]', 'src')(s))) return null;
+          if (await tagInSection(/<script\b[^>]*\bsrc=/i, 'body')(s)) return null;
+          return 'Tu <script src> está fuera de <body>. Muévelo dentro, justo antes de </body>.';
+        },
       },
     ],
     hints: [
       '<script src="script.js"></script>',
-      'Esta etiqueta no cambia nada aquí — apunta a un archivo que no existe en este editor — pero el objetivo se marcará igualmente.',
+      'Va dentro de <body>, en la última línea, justo antes de </body>.',
+      'Esta etiqueta no cambia nada aquí — apunta a un archivo que no existe en este editor — pero el objetivo se marcará igualmente, siempre que esté en el sitio correcto.',
     ],
     setupFiles: { html: L1_HTML, css: '', js: '' },
     curiosity:
@@ -202,9 +211,9 @@ export const module2 = [
     objectives: [
       {
         label: 'saludar recibe un nombre y lo usa en el saludo (pruébala con varios)',
-        validate: (s) =>
-          callFunction('saludar', ['Ada'], (r) => typeof r === 'string' && r.includes('Ada'))(s) &&
-          callFunction('saludar', ['Leo'], (r) => typeof r === 'string' && r.includes('Leo'))(s),
+        validate: async (s) =>
+          (await callFunction('saludar', ['Ada'], (r) => typeof r === 'string' && r.includes('Ada'))(s)) &&
+          (await callFunction('saludar', ['Leo'], (r) => typeof r === 'string' && r.includes('Leo'))(s)),
       },
       { label: 'Llámala con un nombre y muestra el resultado', validate: consoleHasType('string') },
     ],
@@ -234,9 +243,9 @@ export const module2 = [
       },
       {
         label: 'Añade otro con push() y muestra el array de nuevo',
-        validate: (s) =>
-          sourceIncludes('js', /\.push\(/)(s) &&
-          consoleHasValue((raw, type) => type === 'array' && JSON.parse(raw).length >= 4)(s),
+        validate: async (s) =>
+          (await sourceIncludes('js', /\.push\(/)(s)) &&
+          (await consoleHasValue((raw, type) => type === 'array' && JSON.parse(raw).length >= 4)(s)),
       },
     ],
     hints: [
@@ -290,7 +299,8 @@ export const module2 = [
       },
       {
         label: 'Accede a una propiedad con el punto (persona.nombre)',
-        validate: (s) => sourceIncludes('js', /persona\.\w+/)(s) && consoleHasType('string')(s),
+        validate: async (s) =>
+          (await sourceIncludes('js', /persona\.\w+/)(s)) && (await consoleHasType('string')(s)),
       },
     ],
     hints: [
@@ -318,8 +328,9 @@ export const module2 = [
       },
       {
         label: 'Llama a persona.presentarse() y muestra el texto en consola',
-        validate: (s) =>
-          sourceIncludes('js', /persona\.presentarse\s*\(\s*\)/)(s) && consoleHasType('string')(s),
+        validate: async (s) =>
+          (await sourceIncludes('js', /persona\.presentarse\s*\(\s*\)/)(s)) &&
+          (await consoleHasType('string')(s)),
       },
     ],
     hints: [
@@ -372,10 +383,9 @@ export const module2 = [
       },
       {
         label: 'Cámbiale el texto con .textContent =',
-        validate: (s) => {
-          if (!sourceIncludes('js', /\.textContent\s*=/)(s)) return false;
-          const el = s.doc.querySelector('#mensaje');
-          const text = el?.textContent.trim() ?? '';
+        validate: async (s) => {
+          if (!(await sourceIncludes('js', /\.textContent\s*=/)(s))) return false;
+          const text = ((await s.query('text', { selector: '#mensaje' })) ?? '').trim();
           return text !== '' && text !== 'Hola, mundo';
         },
       },
@@ -402,13 +412,10 @@ export const module2 = [
         validate: sourceIncludes('js', /addEventListener\(\s*['"]click['"]/),
       },
       {
-        label: 'Al hacer clic, el texto del párrafo cambia',
-        validate: (s) => {
-          const boton = s.doc.querySelector('#boton');
-          const mensaje = s.doc.querySelector('#mensaje');
-          if (!boton || !mensaje) return false;
-          boton.click();
-          return mensaje.textContent.trim() !== 'Hola, mundo';
+        label: 'Haz clic en el botón de la vista previa: el texto del párrafo cambia',
+        validate: async (s) => {
+          const text = ((await s.query('text', { selector: '#mensaje' })) ?? '').trim();
+          return text !== '' && text !== 'Hola, mundo';
         },
       },
       {
@@ -420,6 +427,7 @@ export const module2 = [
       'const boton = document.querySelector("#boton");',
       'const mensaje = document.querySelector("#mensaje");',
       'boton.addEventListener("click", () => { mensaje.textContent = "¡Hiciste clic!"; mensaje.classList.add("resaltado"); });',
+      'Este objetivo se comprueba de verdad: pulsa el botón en la vista previa (a la derecha) para que se marque.',
     ],
     setupFiles: { html: L14_HTML, css: L14_CSS, js: L14_JS },
     curiosity:

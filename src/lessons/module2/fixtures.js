@@ -3,16 +3,32 @@
 // para poder centrarse en un único concepto a la vez. En las lecciones que
 // trabajan sobre la consola, el HTML lo recuerda para que la vista previa
 // "vacía" no despiste.
+//
+// Como en el módulo 1, cada fixture es un documento completo: <html>,
+// <head> (con <title>) y <body>. El <script> que enlaza el JS de verdad
+// (lección 1) va al final del <body>, justo como se explica en la lección.
 
-const consolePage = (titulo) => `<h1>${titulo}</h1>
-<p>El resultado de esta lección no se ve aquí: míralo en la <strong>Consola</strong>, abajo. 👇</p>
+const PAGE = (body, headExtra = '') => `<html>
+<head>
+  <title>Mi página</title>
+${headExtra}</head>
+<body>
+${body}
+</body>
+</html>
 `;
 
-export const L1_HTML = `<h1>Antes de programar</h1>
+const consolePage = (titulo) =>
+  PAGE(`<h1>${titulo}</h1>
+<p>El resultado de esta lección no se ve aquí: míralo en la <strong>Consola</strong>, abajo. 👇</p>
+`);
+
+export const L1_HTML = PAGE(`<h1>Antes de programar</h1>
 <p>Tu página necesita saber dónde está su JavaScript.</p>
 
-<!-- Añade aquí el <script src> -->
-`;
+<!-- Añade aquí el <script src>: va al final del <body>, justo antes de
+     cerrarlo, no en el <head>. -->
+`);
 
 export const L2_HTML = consolePage('Tu primer mensaje');
 export const L2_JS = `// Escribe aquí tus console.log() y pulsa «Ver en web»
@@ -54,19 +70,19 @@ export const L11_HTML = consolePage('Métodos');
 export const L11_JS = `// Añade a "persona" un método presentarse que use this, y muestra su resultado
 `;
 
-export const L12_HTML = `<p id="mensaje">Hola, mundo</p>
-`;
+export const L12_HTML = PAGE(`<p id="mensaje">Hola, mundo</p>
+`);
 export const L12_JS = `// Selecciona el párrafo con id "mensaje" y muestra su texto en la consola
 `;
 
-export const L13_HTML = `<p id="mensaje">Hola, mundo</p>
-`;
+export const L13_HTML = PAGE(`<p id="mensaje">Hola, mundo</p>
+`);
 export const L13_JS = `// Selecciona el párrafo y cámbiale el texto: mira la vista previa
 `;
 
-export const L14_HTML = `<p id="mensaje">Hola, mundo</p>
+export const L14_HTML = PAGE(`<p id="mensaje">Hola, mundo</p>
 <button id="boton">Haz clic</button>
-`;
+`);
 export const L14_CSS = `.resaltado {
   color: #fabd2f;
   font-weight: bold;

@@ -5,7 +5,7 @@ import ProgressBar from './ProgressBar';
 import Curiosity from './Curiosity';
 import RichText from './RichText';
 
-export default function LessonPanel({ lesson, lessonIndex, total, progress, isComplete }) {
+export default function LessonPanel({ lesson, lessonIndex, total, progress, isComplete, warning }) {
   if (!lesson) {
     return (
       <aside className="w-80 flex flex-col items-center justify-center p-6 bg-gray-900 border-r border-gray-700 text-center">
@@ -39,6 +39,11 @@ export default function LessonPanel({ lesson, lessonIndex, total, progress, isCo
       </div>
 
       <LessonObjective objectives={lesson.objectives} progress={progress} />
+      {warning && (
+        <p className="text-xs text-yellow-300 bg-yellow-900/30 border border-yellow-800 rounded px-2 py-1.5">
+          ⚠ {warning}
+        </p>
+      )}
       <HintSystem hints={lesson.hints} />
       <ProgressBar value={progress} max={lesson.objectives?.length ?? 1} />
       <Curiosity text={lesson.curiosity} />
