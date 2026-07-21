@@ -164,6 +164,18 @@ export function saveWelcomeSeen() {
   try { localStorage.setItem(WELCOME_KEY, '1'); } catch (_) {}
 }
 
+// Modal de introducción al nivel medio: primera visita a la sección
+// (y otra vez tras reiniciar, porque clearProgress borra la marca).
+const MEDIO_INTRO_KEY = 'jsplay:welcomed:medio';
+
+export function loadMedioIntroSeen() {
+  try { return localStorage.getItem(MEDIO_INTRO_KEY) === '1'; } catch (_) { return true; }
+}
+
+export function saveMedioIntroSeen() {
+  try { localStorage.setItem(MEDIO_INTRO_KEY, '1'); } catch (_) {}
+}
+
 const EXPORT_VERSION = 2;
 
 // Empaqueta todo el progreso (código, lección, logros, perfil y nivel) tal

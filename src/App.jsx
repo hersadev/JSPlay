@@ -11,6 +11,7 @@ import BadgesPanel from './components/badges/BadgesPanel';
 import BadgeModal from './components/badges/BadgeModal';
 import StuckHelpModal from './components/lesson/StuckHelpModal';
 import WelcomeModal from './components/onboarding/WelcomeModal';
+import MedioIntroModal from './components/onboarding/MedioIntroModal';
 import { useSandbox } from './hooks/useSandbox';
 import { useSandboxStore } from './store/sandboxStore';
 import { useLessonProgress } from './hooks/useLessonProgress';
@@ -27,6 +28,8 @@ import {
   clearProgress,
   loadWelcomeSeen,
   saveWelcomeSeen,
+  loadMedioIntroSeen,
+  saveMedioIntroSeen,
   saveProfile,
   loadProfile,
 } from './utils/persistence';
@@ -63,6 +66,11 @@ export default function App() {
   const [badgesOpen, setBadgesOpen] = useState(false);
   const [stuckOpen, setStuckOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(() => !loadWelcomeSeen());
+  // Introducción al nivel medio: también al arrancar, por si la app se
+  // recarga estando ya en esa sección sin haberla visto.
+  const [medioIntroOpen, setMedioIntroOpen] = useState(
+    () => loadLevel() === 'medio' && !loadMedioIntroSeen()
+  );
 
   const [leftWidth, setLeftWidth] = useState(320);
   const [rightWidth, setRightWidth] = useState(420);
@@ -203,6 +211,7 @@ export default function App() {
     setBadgesOpen(false);
     setStuckOpen(false);
     setWelcomeOpen(true);
+    setMedioIntroOpen(false);
     replaceCode(LEVEL_LESSONS[DEFAULT_LEVEL][0]?.setupFiles ?? { html: '', css: '', js: '' });
   }
 
@@ -222,6 +231,12 @@ export default function App() {
     setSandboxMode(false);
     setSelectorOpen(false);
     setStuckOpen(false);
+    if (next === 'medio' && !loadMedioIntroSeen()) setMedioIntroOpen(true);
+  }
+
+  function handleCloseMedioIntro() {
+    saveMedioIntroSeen();
+    setMedioIntroOpen(false);
   }
 
   function handleCloseWelcome() {
@@ -351,6 +366,10 @@ export default function App() {
 
       <AnimatePresence>
         {welcomeOpen && <WelcomeModal onClose={handleCloseWelcome} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {medioIntroOpen && <MedioIntroModal onClose={handleCloseMedioIntro} />}
       </AnimatePresence>
     </MainLayout>
   );
