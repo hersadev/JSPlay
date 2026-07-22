@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useSandboxStore } from '../../store/sandboxStore';
+import { translateError } from '../../utils/errorMessages';
 
 const LEVEL_COLOR = {
   log: 'text-gray-200',
@@ -96,9 +97,10 @@ export default function ConsolePanel({ open = true, onToggle }) {
                 ))}
               </div>
             ))}
-            {errors.map((msg, i) => (
+            {errors.map((err, i) => (
               <div key={`err-${i}`} className="text-red-400">
-                ⚠ {msg}
+                ⚠ {translateError(err.message)}
+                {err.line != null && <span className="text-red-500/70"> (línea {err.line})</span>}
               </div>
             ))}
             {replLines.map((line, i) => (
@@ -106,7 +108,9 @@ export default function ConsolePanel({ open = true, onToggle }) {
                 <div className="text-gray-500">
                   <span className="text-green-400">{'>'}</span> {line.expr}
                 </div>
-                <div className={line.ok ? 'text-gray-200' : 'text-red-400'}>{line.output}</div>
+                <div className={line.ok ? 'text-gray-200' : 'text-red-400'}>
+                  {line.ok ? line.output : translateError(line.output)}
+                </div>
               </div>
             ))}
           </div>

@@ -104,7 +104,7 @@ function __post(msg) {
   };
 });
 window.addEventListener('error', function (e) {
-  __post({ tag: '${BRIDGE_TAG}', kind: 'error', message: e.message });
+  __post({ tag: '${BRIDGE_TAG}', kind: 'error', message: e.message, lineno: e.lineno });
 });
 
 function __reply(id, result) {
@@ -148,12 +148,40 @@ function __handleQuery(msg) {
       if (!elStyle) return null;
       return window.getComputedStyle(elStyle)[msg.prop];
     }
-    case 'globalIsFunction':
-      return typeof window[msg.name] === 'function';
+    case 'globalIsFunction': {
+      var probedFn;
+      try {
+        probedFn = window.eval(msg.name);
+      } catch (e) {
+        return false;
+      }
+      return typeof probedFn === 'function';
+    }
     case 'callFunction': {
-      var fn = window[msg.name];
+      var fn;
+      try {
+        fn = window.eval(msg.name);
+      } catch (e) {
+        return { notFunction: true };
+      }
       if (typeof fn !== 'function') return { notFunction: true };
       return { value: fn.apply(null, msg.args || []) };
+    }
+    case 'selectorMatchesElement': {
+      var target;
+      try {
+        target = document.querySelector(msg.targetSelector);
+      } catch (e) {
+        target = null;
+      }
+      if (!target) return false;
+      var candidate;
+      try {
+        candidate = document.querySelector(msg.selector);
+      } catch (e) {
+        return false;
+      }
+      return candidate === target;
     }
     case 'evalExpr': {
       var value, errMsg;
@@ -260,6 +288,14 @@ function reclaimHeadContent(parsed) {
   });
 }
 
+// Devuelve { html, jsLineOffset }: jsLineOffset es cuántas líneas del
+// documento completo van ANTES de la primera línea del script del alumno.
+// e.lineno del evento 'error' (ver PROBE_SCRIPT) viene numerado respecto al
+// documento entero, no al archivo que el alumno ve en su editor — sin restar
+// este offset, un error en su línea 1 se mostraría como "línea 14" o lo que
+// toque, un número que no significa nada para quien no ve este HTML
+// generado. Se calcula, no se hardcodea, porque el tamaño de <head>/<body>
+// varía de una lección a otra (parsed.head.innerHTML, parsed.body.innerHTML).
 export function buildSrcDoc({ html = '', css = '', js = '', storage = {} }) {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   reclaimHeadContent(parsed);
@@ -272,7 +308,18 @@ export function buildSrcDoc({ html = '', css = '', js = '', storage = {} }) {
   const safeCss = escapeInlineClosingTags(css);
   const safeJs = escapeInlineClosingTags(js);
   const safeStorageInit = escapeInlineClosingTags(storageInit);
-  return `<!doctype html>
+  // El script del alumno va SUELTO, sin envolverlo en try/catch: un try{}
+  // inyectado alrededor de su código crea un bloque que oculta sus propios
+  // let/const del resto del documento (no cuelgan de window, y quedan fuera
+  // del alcance de un window.eval posterior — ver globalIsFunction/
+  // callFunction en PROBE_SCRIPT), y si el alumno deja una llave de más su
+  // código puede cerrar ese try antes de tiempo, dando el clásico
+  // "Missing catch or finally after try" — un error que no tiene nada que
+  // ver con lo que realmente escribió. Los errores en tiempo de ejecución
+  // (y los de sintaxis, que impiden parsear el <script> entero) ya llegan
+  // igualmente al listener 'error' de PROBE_SCRIPT, así que el try/catch no
+  // añadía ninguna cobertura que no tuviéramos ya.
+  const prefix = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -285,14 +332,11 @@ ${parsed.body.innerHTML}
 <script>${STORAGE_POLYFILL}</script>
 <script>${PROBE_SCRIPT}</script>
 <script>
-try {
-${safeJs}
-} catch (err) {
-  if (window.parent) {
-    window.parent.postMessage({ tag: '${BRIDGE_TAG}', kind: 'error', message: err.message }, '*');
-  }
-}
+`;
+  const suffix = `
 </script>
 </body>
 </html>`;
+  const jsLineOffset = prefix.split('\n').length - 1;
+  return { html: prefix + safeJs + suffix, jsLineOffset };
 }

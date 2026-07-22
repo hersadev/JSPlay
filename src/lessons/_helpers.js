@@ -25,6 +25,25 @@ const safe = (fn) => async (s) => {
 
 export const hasElement = (selector) => safe(async (s) => await s.query('exists', { selector }));
 
+// Extrae los selectores que el alumno le pasó a querySelector(...) en su
+// código y comprueba, ejecutándolos de verdad contra el DOM, si alguno
+// apunta al MISMO elemento que targetSelector. No exige un selector
+// concreto — 'p#mensaje', '#mensaje' y '[id="mensaje"]' son todos válidos y
+// dan el mismo resultado — a diferencia de comparar el texto fuente contra
+// un único patrón fijo, que rechaza selectores igual de correctos solo por
+// no coincidir carácter a carácter.
+export const queryTargetsElement = (fileKey, targetSelector) =>
+  safe(async (s) => {
+    const src = s.code?.[fileKey] ?? '';
+    const pattern = /querySelector\(\s*(['"])(.*?)\1\s*\)/g;
+    let match;
+    while ((match = pattern.exec(src))) {
+      if (await s.query('selectorMatchesElement', { selector: match[2], targetSelector })) return true;
+      if (match[0].length === 0) pattern.lastIndex++;
+    }
+    return false;
+  });
+
 export const minCount = (selector, n) =>
   safe(async (s) => (await s.query('count', { selector })) >= n);
 
@@ -74,10 +93,12 @@ export const hasBackgroundColor = (selector) =>
   computedStyle(selector, 'backgroundColor', (v) => !TRANSPARENT.has(v));
 
 // ── Variables y funciones globales ──────────────────────────────────────
-// Solo `var` y `function nombre(){}` en el ámbito global quedan colgadas de
-// `window`; `let`/`const` no. Por eso estos validadores se reservan para
-// funciones (declaradas con `function`) — para variables con let/const se
-// usan los validadores de consola de abajo.
+// El nombre se busca con un eval indirecto dentro del iframe (ver
+// 'globalIsFunction'/'callFunction' en sandboxRunner.js), así que da igual
+// cómo se haya declarado la función — `function nombre(){}`, `var`, `let` o
+// `const nombre = () => {}` — todas quedan igual de accesibles: solo hace
+// falta que estén en el ámbito superior del script (no dentro de un bloque,
+// una función, etc.).
 
 export const globalIsFunction = (name) =>
   safe(async (s) => await s.query('globalIsFunction', { name }));
@@ -88,6 +109,19 @@ export const callFunction = (name, args, expected) =>
     if (!res || res.notFunction) return false;
     const result = res.value;
     return typeof expected === 'function' ? expected(result) : result === expected;
+  });
+
+// ¿Alguna llamada a expr (evaluada dentro del iframe, con acceso a las
+// variables globales del alumno) da exactamente `true`? Para comprobaciones
+// que necesitan el estado/comportamiento real del código del alumno y no
+// solo su forma — p. ej. que un método que usa `this` devuelva de verdad el
+// valor esperado, no que su fuente contenga el texto "this.algo" (ver
+// m2-l11: un método declarado como función flecha rompe `this` pero su
+// fuente seguiría casando ese patrón).
+export const evalTrue = (expr) =>
+  safe(async (s) => {
+    const res = await s.query('evalExpr', { expr });
+    return res?.ok === true && res.output === 'true';
   });
 
 // ── Consola ──────────────────────────────────────────────────────────────

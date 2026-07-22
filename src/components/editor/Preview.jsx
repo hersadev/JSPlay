@@ -42,6 +42,7 @@ export default function Preview() {
   const codeRef = useRef({ html: '', css: '', js: '' });
   const storageRef = useRef(loadSandboxStorage());
   const activityTimerRef = useRef(null);
+  const jsLineOffsetRef = useRef(0);
 
   const codeRevision = useSandboxStore((s) => s.codeRevision);
   const manualRenderTick = useSandboxStore((s) => s.manualRenderTick);
@@ -70,10 +71,13 @@ export default function Preview() {
             consoleLogRef.current = [...consoleLogRef.current, msg.entry].slice(-MAX_CONSOLE_ENTRIES);
             publishState();
             break;
-          case 'error':
-            errorsRef.current = [...errorsRef.current, msg.message].slice(-MAX_CONSOLE_ENTRIES);
+          case 'error': {
+            const line = msg.lineno != null ? msg.lineno - jsLineOffsetRef.current : null;
+            const entry = { message: msg.message, line: line > 0 ? line : null };
+            errorsRef.current = [...errorsRef.current, entry].slice(-MAX_CONSOLE_ENTRIES);
             publishState();
             break;
+          }
           case 'activity':
             // Algo pudo cambiar el DOM (p. ej. el propio listener de clic
             // del alumno): volver a publicar el estado para que se
@@ -128,7 +132,8 @@ export default function Preview() {
     consoleLogRef.current = [];
     errorsRef.current = [];
     clearTimeout(activityTimerRef.current);
-    const html = buildSrcDoc({ ...current, storage: storageRef.current });
+    const { html, jsLineOffset } = buildSrcDoc({ ...current, storage: storageRef.current });
+    jsLineOffsetRef.current = jsLineOffset;
     iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [codeRevision, manualRenderTick]);

@@ -6,6 +6,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { useSandbox } from '../../hooks/useSandbox';
 import { useSandboxStore } from '../../store/sandboxStore';
 import { syntaxErrorLinter } from './syntaxLinter';
+import { smartCloseBracketSkip } from './smartCloseBrackets';
 
 const TABS = [
   { key: 'html', label: 'index.html', ext: html() },
@@ -48,7 +49,7 @@ export default function CodeTabs() {
           value={code[tab.key]}
           height="100%"
           theme="dark"
-          extensions={[tab.ext, syntaxErrorLinter]}
+          extensions={[tab.ext, syntaxErrorLinter, smartCloseBracketSkip]}
           onChange={(value) => setCode({ [tab.key]: value })}
           basicSetup={{ tabSize: 2 }}
           style={{ height: '100%', fontSize: 13 }}
