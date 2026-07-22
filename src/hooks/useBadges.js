@@ -20,7 +20,6 @@ export function useBadges({ level, sandboxState, lessonIndex, totalLessons, isCo
 
   useEffect(() => {
     let cancelled = false;
-    const ctx = { sandboxState, lessonIndex, totalLessons, isComplete };
     // b.check puede ser async (los que miran el DOM del iframe preguntan por
     // postMessage, ver lessons/_helpers.js): se comprueban en orden con
     // await, y si el efecto se cancela a mitad (cambió algo antes de
@@ -29,6 +28,12 @@ export function useBadges({ level, sandboxState, lessonIndex, totalLessons, isCo
     (async () => {
       const newly = [];
       const next = new Set(earned);
+      // `earned` en el contexto es el propio Set `next`, que se va
+      // completando A MEDIDA que se recorre badges: así un logro que
+      // dependa de tener ya otros (p. ej. "Graduado", ver badges.js) ve
+      // también los que se acaban de conceder en este mismo pase, no solo
+      // los de antes de esta revisión.
+      const ctx = { sandboxState, lessonIndex, totalLessons, isComplete, earned: next };
       for (const b of badges) {
         if (next.has(b.id)) continue;
         let ok = false;

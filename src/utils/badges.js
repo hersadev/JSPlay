@@ -74,13 +74,18 @@ const BADGES_BASICO = [
     check: ({ lessonIndex }) => lessonIndex >= LEVEL_LESSONS.basico.length,
   },
   {
+    // Antes disparaba con el mismo umbral que 'nivel-basico' (llegar al
+    // final): dos logros distintos para el mismo instante, con nombres casi
+    // sinónimos. Ahora es el logro "de verdad difícil": no basta con llegar
+    // al final, hay que haberse ganado TODOS los demás logros del nivel
+    // (incluido 'nivel-basico') — usa BADGES_BASICO en vez de una lista
+    // aparte para no tener que mantener las dos sincronizadas si se añade
+    // un logro nuevo.
     id: 'graduate',
     name: 'Graduado',
-    description: `Completa las ${LEVEL_LESSONS.basico.length} lecciones del nivel básico.`,
+    description: 'Consigue el resto de logros del nivel básico.',
     icon: '🎓',
-    check: ({ lessonIndex, isComplete }) =>
-      lessonIndex >= LEVEL_LESSONS.basico.length ||
-      (isComplete && lessonIndex >= LEVEL_LESSONS.basico.length - 1),
+    check: ({ earned }) => BADGES_BASICO.filter((b) => b.id !== 'graduate').every((b) => earned.has(b.id)),
   },
 ];
 
