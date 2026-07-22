@@ -56,7 +56,7 @@ export const module2 = [
     description: [
       'Con HTML y CSS tu página se ve bien, pero no hace nada: no reacciona, no calcula, no cambia. Para eso está JavaScript, el tercer lenguaje de la web y el primero «de programación» que vas a usar: sirve para darle instrucciones al navegador.',
       'Igual que el CSS, el JavaScript vive en su propio archivo (`script.js`) y el HTML tiene que enlazarlo, esta vez con la etiqueta `<script src="script.js"></script>`, normalmente justo antes de cerrar `</body>` — no en el `<head>`, como el `<link>` del CSS: un script se coloca al final para que el navegador termine de construir la página antes de ejecutarlo.',
-      'En JSPlay la pestaña JavaScript se ejecuta sola — el editor enlaza ese archivo por ti — pero fuera de aquí esta etiqueta es imprescindible. Añádela dentro del `<body>`, justo antes de `</body>`.',
+      'En JSPlay la pestaña script.js se ejecuta sola — el editor enlaza ese archivo por ti — pero fuera de aquí esta etiqueta es imprescindible. Añádela dentro del `<body>`, justo antes de `</body>`.',
     ].join('\n\n'),
     objectives: [
       {
@@ -87,7 +87,7 @@ export const module2 = [
     description: [
       'Programar es escribir instrucciones que el ordenador ejecuta en orden, de arriba abajo. Tu primera instrucción: `console.log()`, que muestra un mensaje en la consola — el panel que se acaba de abrir ahí abajo. Los programadores la usan a todas horas para ver qué pasa dentro de su programa.',
       'Lo que pongas entre los paréntesis es lo que se muestra. Si es texto, va entre comillas: `console.log("Hola")`. Si es un número, va sin comillas: `console.log(42)`. Para el ordenador, texto y números son cosas distintas.',
-      'Escribe en la pestaña JavaScript un `console.log()` con un saludo y otro con tu número favorito, y pulsa «Ver en web» para ejecutarlos.',
+      'Escribe en la pestaña script.js un `console.log()` con un saludo y otro con tu número favorito, y pulsa «Ver en web» para ejecutarlos.',
     ].join('\n\n'),
     objectives: [
       { label: 'Muestra un texto (entre comillas) en la consola', validate: consoleHasType('string') },
