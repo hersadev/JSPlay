@@ -14,6 +14,7 @@ import {
   hasBackgroundColor,
   sourceIncludes,
   tagInSection,
+  sectionExists,
 } from '../_helpers';
 import {
   L1_HTML,
@@ -136,6 +137,9 @@ export const module1 = [
         warn: async (s) => {
           if (!(await attrNotEmpty('link[rel="stylesheet"]', 'href')(s))) return null;
           if (await tagInSection(/<link\b[^>]*rel=["']stylesheet["'][^>]*>/i, 'head')(s)) return null;
+          if (!(await sectionExists('head')(s))) {
+            return 'No encuentro un <head>...</head> completo en tu HTML. Revisa que no lo hayas borrado o dejado a medias sin querer.';
+          }
           return 'Tu <link> está fuera de <head>. Muévelo dentro de las líneas <head> y </head>.';
         },
       },

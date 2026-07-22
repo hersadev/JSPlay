@@ -18,6 +18,14 @@ import { loadSandboxStorage, persistSandboxStorage } from '../../utils/persisten
 // la REPL) llega por postMessage a través de sandboxBridge.js. Es más
 // trabajo que leer directamente, pero es la diferencia entre "sandbox de
 // verdad" y "cualquier script pegado en el editor puede tocar la app real".
+// Cuántos ms de calma esperar tras el último clic dentro del iframe antes de
+// revalidar objetivos/logros. Un clic aislado se nota igual (el aviso llega
+// casi al instante); una ráfaga de clics — típica en lecciones con contador
+// — colapsa en una sola revalidación al final en vez de relanzar todo el
+// pipeline (postMessage de ida y vuelta por cada objetivo, más logros) por
+// cada clic suelto de la ráfaga.
+const ACTIVITY_DEBOUNCE_MS = 150;
+
 export default function Preview() {
   const iframeRef = useRef(null);
   const bridgeRef = useRef(null);
@@ -25,6 +33,7 @@ export default function Preview() {
   const errorsRef = useRef([]);
   const codeRef = useRef({ html: '', css: '', js: '' });
   const storageRef = useRef(loadSandboxStorage());
+  const activityTimerRef = useRef(null);
 
   const codeRevision = useSandboxStore((s) => s.codeRevision);
   const manualRenderTick = useSandboxStore((s) => s.manualRenderTick);
@@ -61,7 +70,11 @@ export default function Preview() {
             // Algo pudo cambiar el DOM (p. ej. el propio listener de clic
             // del alumno): volver a publicar el estado para que se
             // revaliden los objetivos contra el DOM actual del iframe.
-            publishState();
+            // Con debounce (ver ACTIVITY_DEBOUNCE_MS): cada clic dispara esto,
+            // y sin él una ráfaga de clics relanzaría el pipeline completo de
+            // objetivos + logros una vez por clic.
+            clearTimeout(activityTimerRef.current);
+            activityTimerRef.current = setTimeout(publishState, ACTIVITY_DEBOUNCE_MS);
             break;
           case 'storageSet':
             storageRef.current = { ...storageRef.current, [msg.key]: msg.value };
@@ -91,6 +104,7 @@ export default function Preview() {
     );
 
     return () => {
+      clearTimeout(activityTimerRef.current);
       bridgeRef.current?.dispose();
       registerEvalRunner(null);
     };
@@ -105,6 +119,7 @@ export default function Preview() {
     codeRef.current = current;
     consoleLogRef.current = [];
     errorsRef.current = [];
+    clearTimeout(activityTimerRef.current);
     const html = buildSrcDoc({ ...current, storage: storageRef.current });
     iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
     // eslint-disable-next-line react-hooks/exhaustive-deps

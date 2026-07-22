@@ -28,17 +28,37 @@ export const hasElement = (selector) => safe(async (s) => await s.query('exists'
 export const minCount = (selector, n) =>
   safe(async (s) => (await s.query('count', { selector })) >= n);
 
+// 'texts'/'attrs' (plural) devuelven un array con TODOS los elementos que
+// casan el selector, no solo el primero (a diferencia de 'text'/'attr', que
+// siguen existiendo para el puñado de sitios que consultan un selector de
+// id, necesariamente único). Sin esto, si el alumno deja un <li> vacío de
+// un intento anterior y añade otro con el texto bueno sin borrar el
+// primero, `document.querySelector` se queda con el vacío y el objetivo no
+// se marca aunque el alumno lo haya hecho bien — el mismo punto ciego que
+// tenía tagInSection antes de comprobar todas las coincidencias.
 export const textNotEmpty = (selector) =>
-  safe(async (s) => ((await s.query('text', { selector })) ?? '').trim().length > 0);
+  safe(async (s) => {
+    const texts = (await s.query('texts', { selector })) ?? [];
+    return texts.some((t) => (t ?? '').trim().length > 0);
+  });
 
 export const textContains = (selector, substring) =>
-  safe(async (s) => ((await s.query('text', { selector })) ?? '').includes(substring));
+  safe(async (s) => {
+    const texts = (await s.query('texts', { selector })) ?? [];
+    return texts.some((t) => (t ?? '').includes(substring));
+  });
 
 export const attrNotEmpty = (selector, attr) =>
-  safe(async (s) => ((await s.query('attr', { selector, attr })) ?? '').trim().length > 0);
+  safe(async (s) => {
+    const attrs = (await s.query('attrs', { selector, attr })) ?? [];
+    return attrs.some((v) => (v ?? '').trim().length > 0);
+  });
 
 export const attrEquals = (selector, attr, expected) =>
-  safe(async (s) => (await s.query('attr', { selector, attr })) === expected);
+  safe(async (s) => {
+    const attrs = (await s.query('attrs', { selector, attr })) ?? [];
+    return attrs.some((v) => v === expected);
+  });
 
 // prop: nombre de estilo computado en camelCase (ej. 'backgroundColor').
 // expected: valor exacto, o función (valor) => boolean para comparaciones flexibles.
@@ -104,18 +124,32 @@ export const sourceIncludes = (fileKey, pattern) =>
 // son permisivos con eso), así que la única forma de detectar el error de
 // verdad es mirar dónde lo puso en su propio código.
 //
+// Busca <sectionTag>...</sectionTag> en el texto fuente y devuelve dónde
+// empieza y acaba su contenido, o null si la sección no está completa (falta
+// la apertura, el cierre, o el cierre viene antes que la apertura). Factorizado
+// aparte de tagInSection para poder distinguir, en los avisos de las
+// lecciones, "la etiqueta está fuera de sitio" de "la sección en sí está
+// rota o no existe" — son errores distintos y confundirlos despista al
+// alumno (ver sectionExists más abajo).
+function findSection(src, sectionTag) {
+  const openMatch = new RegExp(`<${sectionTag}(?:\\s[^>]*)?>`, 'i').exec(src);
+  const closeMatch = new RegExp(`</${sectionTag}\\s*>`, 'i').exec(src);
+  if (!openMatch || !closeMatch) return null;
+  const sectionStart = openMatch.index + openMatch[0].length;
+  const sectionEnd = closeMatch.index;
+  if (sectionEnd <= sectionStart) return null;
+  return { sectionStart, sectionEnd };
+}
+
 // Comprueba TODAS las coincidencias de tagPattern, no solo la primera: si el
 // alumno deja una etiqueta mal puesta de un intento anterior y añade otra
 // bien puesta sin borrar la primera, debe contar como resuelto igualmente.
 export const tagInSection = (tagPattern, sectionTag) =>
   safe((s) => {
     const src = s.code?.html ?? '';
-    const openMatch = new RegExp(`<${sectionTag}(?:\\s[^>]*)?>`, 'i').exec(src);
-    const closeMatch = new RegExp(`</${sectionTag}\\s*>`, 'i').exec(src);
-    if (!openMatch || !closeMatch) return false;
-    const sectionStart = openMatch.index + openMatch[0].length;
-    const sectionEnd = closeMatch.index;
-    if (sectionEnd <= sectionStart) return false;
+    const section = findSection(src, sectionTag);
+    if (!section) return false;
+    const { sectionStart, sectionEnd } = section;
     const global = new RegExp(tagPattern.source, tagPattern.flags.includes('g') ? tagPattern.flags : tagPattern.flags + 'g');
     let match;
     while ((match = global.exec(src))) {
@@ -124,3 +158,11 @@ export const tagInSection = (tagPattern, sectionTag) =>
     }
     return false;
   });
+
+// ¿Tiene el alumno un <sectionTag>...</sectionTag> completo en su HTML? Para
+// usar en los `warn` que acompañan a tagInSection: si esto da false, el
+// problema no es que la etiqueta esté fuera de sitio (tagInSection ya
+// descartó eso) sino que la sección misma falta o está mal escrita, y el
+// aviso debe decir eso en vez de "muévela a head/body".
+export const sectionExists = (sectionTag) =>
+  safe((s) => findSection(s.code?.html ?? '', sectionTag) != null);
