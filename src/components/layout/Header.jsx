@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { exportProgress, importProgress } from '../../utils/persistence';
 import { LEVELS, DEFAULT_LEVEL } from '../../lessons';
@@ -18,8 +18,28 @@ export default function Header({
   totalBadges = 0,
 }) {
   const fileInputRef = useRef(null);
+  const menuRef = useRef(null);
   const [justSaved, setJustSaved] = useState(false);
   const [confirmResetOpen, setConfirmResetOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Menú "Más": se cierra al pinchar fuera o con Escape, como el resto de
+  // paneles flotantes de la app.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e) => {
+      if (!menuRef.current?.contains(e.target)) setMenuOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false);
+    };
+    window.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [menuOpen]);
 
   function handleConfirmReset() {
     setConfirmResetOpen(false);
@@ -99,16 +119,6 @@ export default function Header({
       </div>
 
       <nav className="flex items-center gap-5 text-gray-300 text-sm">
-        {otherLevel && (
-          <button
-            onClick={onSwitchLevel}
-            className="hover:text-white transition-colors flex items-center gap-1.5"
-            title={otherLevel.tagline}
-          >
-            <span>{otherLevel.icon}</span>
-            <span>{level === DEFAULT_LEVEL ? 'Ir al nivel medio' : 'Volver al básico'}</span>
-          </button>
-        )}
         <button onClick={onOpenLessons} className="hover:text-white transition-colors">
           Lecciones
         </button>
@@ -129,22 +139,63 @@ export default function Header({
           <span>{sandboxMode ? '↩️' : '🎮'}</span>
           <span>{sandboxMode ? 'Volver a lecciones' : 'Sandbox'}</span>
         </button>
-        <button
-          onClick={handleExport}
-          className={`transition-colors flex items-center gap-1.5 ${justSaved ? 'text-green-400' : 'hover:text-white'}`}
-          title="Descargar tu progreso como archivo"
-        >
-          <span>{justSaved ? '✓' : '💾'}</span>
-          <span className="text-xs">{justSaved ? 'Guardado' : 'Guardar'}</span>
-        </button>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="hover:text-white transition-colors flex items-center gap-1.5"
-          title="Cargar un progreso guardado"
-        >
-          <span>📂</span>
-          <span className="text-xs">Cargar</span>
-        </button>
+
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-expanded={menuOpen}
+            title="Más opciones"
+            className={`transition-colors px-2 py-1 rounded ${menuOpen ? 'text-white bg-gray-800' : 'hover:text-white'}`}
+          >
+            ⋯
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl py-1.5 z-10 flex flex-col">
+              {otherLevel && (
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onSwitchLevel();
+                  }}
+                  className="text-left px-3 py-2 hover:bg-gray-800 transition-colors flex items-center gap-2"
+                  title={otherLevel.tagline}
+                >
+                  <span>{otherLevel.icon}</span>
+                  <span>{level === DEFAULT_LEVEL ? 'Ir al nivel medio' : 'Volver al básico'}</span>
+                </button>
+              )}
+              <button
+                onClick={handleExport}
+                className={`text-left px-3 py-2 hover:bg-gray-800 transition-colors flex items-center gap-2 ${justSaved ? 'text-green-400' : ''}`}
+                title="Descargar tu progreso como archivo"
+              >
+                <span>{justSaved ? '✓' : '💾'}</span>
+                <span>{justSaved ? 'Guardado' : 'Guardar progreso'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  fileInputRef.current?.click();
+                }}
+                className="text-left px-3 py-2 hover:bg-gray-800 transition-colors flex items-center gap-2"
+                title="Cargar un progreso guardado"
+              >
+                <span>📂</span>
+                <span>Cargar progreso</span>
+              </button>
+              <div className="my-1 border-t border-gray-800" />
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setConfirmResetOpen(true);
+                }}
+                className="text-left px-3 py-2 text-red-400 hover:bg-red-950/40 transition-colors"
+              >
+                Reiniciar todo
+              </button>
+            </div>
+          )}
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -152,12 +203,6 @@ export default function Header({
           onChange={handleImportFile}
           className="hidden"
         />
-        <button
-          onClick={() => setConfirmResetOpen(true)}
-          className="text-gray-500 hover:text-red-400 transition-colors text-xs border border-gray-700 hover:border-red-800 px-2 py-1 rounded"
-        >
-          Reiniciar
-        </button>
       </nav>
 
       <AnimatePresence>

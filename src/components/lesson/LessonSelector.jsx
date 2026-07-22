@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { MODULES, LEVELS, DEFAULT_LEVEL } from '../../lessons';
 
 // Muestra solo las lecciones del nivel (sección) activo: los índices que
@@ -10,6 +11,14 @@ export default function LessonSelector({
   onSelect,
   onClose,
 }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   let offset = 0;
   const groups = MODULES.filter((m) => m.level === level).map((m) => {
     const items = m.lessons.map((l, i) => ({ ...l, globalIndex: offset + i }));

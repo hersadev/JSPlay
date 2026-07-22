@@ -57,7 +57,7 @@ export default function ConsolePanel({ open = true, onToggle }) {
         onClick={onToggle}
         aria-expanded={open}
         title={open ? 'Ocultar la consola' : 'Mostrar la consola'}
-        className="flex-shrink-0 flex items-center gap-2 w-full px-3 py-1.5 border-b border-gray-800 text-xs text-gray-500 uppercase tracking-wider hover:text-gray-300 transition-colors"
+        className="flex-shrink-0 flex items-center gap-2 w-full px-3 py-1.5 bg-gray-900/60 border-b border-gray-800 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-200 hover:bg-gray-900 transition-colors"
       >
         <span
           className={`text-[9px] transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
@@ -65,6 +65,7 @@ export default function ConsolePanel({ open = true, onToggle }) {
         >
           ▶
         </span>
+        <span aria-hidden="true">🖥️</span>
         <span>Consola</span>
         {!open && errors.length > 0 && (
           <span className="normal-case tracking-normal px-1.5 py-px rounded-full bg-red-900/60 text-red-300 font-mono">

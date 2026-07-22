@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MainLayout from './components/layout/MainLayout';
 import ResizeHandle from './components/layout/ResizeHandle';
+import ScreenTooNarrow from './components/layout/ScreenTooNarrow';
 import CodeTabs from './components/editor/CodeTabs';
 import Preview from './components/editor/Preview';
 import ConsolePanel from './components/console/ConsolePanel';
@@ -38,6 +39,10 @@ import { LEVEL_LESSONS, DEFAULT_LEVEL } from './lessons';
 
 const clampWidth = (px, min, max) => Math.max(min, Math.min(max, px));
 
+// Por debajo de esto la cabecera se solapa y el editor deja de caber: se
+// avisa con <ScreenTooNarrow> en vez de mostrar el layout roto.
+const MIN_APP_WIDTH = 1024;
+
 const SANDBOX_ID = '__sandbox__';
 const SANDBOX_STARTER = {
   html: '<h1>Sandbox libre</h1>\n<p>Escribe lo que quieras, sin objetivos.</p>\n',
@@ -71,6 +76,13 @@ export default function App() {
   const [medioIntroOpen, setMedioIntroOpen] = useState(
     () => loadLevel() === 'medio' && !loadMedioIntroSeen()
   );
+
+  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < MIN_APP_WIDTH);
+  useEffect(() => {
+    const onResize = () => setIsNarrow(window.innerWidth < MIN_APP_WIDTH);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   const [leftWidth, setLeftWidth] = useState(320);
   const [rightWidth, setRightWidth] = useState(420);
@@ -293,6 +305,8 @@ export default function App() {
     setSandboxMode((m) => !m);
     setSelectorOpen(false);
   }
+
+  if (isNarrow) return <ScreenTooNarrow />;
 
   return (
     <MainLayout
