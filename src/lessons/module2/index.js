@@ -17,6 +17,7 @@ import {
   consoleCountAtLeast,
   sourceIncludes,
   tagInSection,
+  sectionExists,
 } from '../_helpers';
 import {
   L1_HTML,
@@ -67,6 +68,9 @@ export const module2 = [
         warn: async (s) => {
           if (!(await attrNotEmpty('script[src]', 'src')(s))) return null;
           if (await tagInSection(/<script\b[^>]*\bsrc=/i, 'body')(s)) return null;
+          if (!(await sectionExists('body')(s))) {
+            return 'No encuentro un <body>...</body> completo en tu HTML. Revisa que no lo hayas borrado o dejado a medias sin querer.';
+          }
           return 'Tu <script src> está fuera de <body>. Muévelo dentro, justo antes de </body>.';
         },
       },

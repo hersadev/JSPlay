@@ -12,6 +12,13 @@ export const PRESENTACION_GENERICA = 'Hola, estoy aprendiendo a hacer páginas w
 const escapeHtml = (s) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+// replaceAll interpreta patrones especiales ($$, $&, $`, $') en su segundo
+// argumento incluso cuando el primero es un string plano, no una regex. Si
+// el nombre o la presentación del jugador contuviera un "$" (p. ej. "$$Juan"),
+// se colaría sin escapar y saldría corrompido en la lección siguiente:
+// duplicar cada "$" hace que replaceAll lo devuelva a un solo "$" literal.
+const escapeDollar = (s) => s.replace(/\$/g, '$$$$');
+
 // Saca del HTML del jugador su nombre (primer <h1>) y su presentación
 // (primer <p>). Devuelve solo los campos que haya personalizado de verdad,
 // o null si no hay ninguno.
@@ -34,10 +41,11 @@ export function applyProfile(files, profile) {
   if (!profile || !files?.html) return files;
   let html = files.html;
   if (profile.nombre) {
-    html = html.replaceAll(`<h1>${NOMBRE_GENERICO}</h1>`, `<h1>${escapeHtml(profile.nombre)}</h1>`);
+    const safeName = escapeDollar(escapeHtml(profile.nombre));
+    html = html.replaceAll(`<h1>${NOMBRE_GENERICO}</h1>`, `<h1>${safeName}</h1>`);
   }
   if (profile.presentacion) {
-    html = html.replaceAll(PRESENTACION_GENERICA, escapeHtml(profile.presentacion));
+    html = html.replaceAll(PRESENTACION_GENERICA, escapeDollar(escapeHtml(profile.presentacion)));
   }
   return { ...files, html };
 }

@@ -133,6 +133,16 @@ function __handleQuery(msg) {
       var elAttr = document.querySelector(msg.selector);
       return elAttr ? elAttr.getAttribute(msg.attr) : null;
     }
+    case 'texts':
+      return Array.prototype.map.call(document.querySelectorAll(msg.selector), function (el) {
+        return el.textContent;
+      });
+    case 'attrs': {
+      var attrName = msg.attr;
+      return Array.prototype.map.call(document.querySelectorAll(msg.selector), function (el) {
+        return el.getAttribute(attrName);
+      });
+    }
     case 'computedStyle': {
       var elStyle = document.querySelector(msg.selector);
       if (!elStyle) return null;
