@@ -125,7 +125,7 @@ export const module1 = [
       'Tu página ya tiene estructura, pero el aspecto — colores, tamaños, tipografías — es el que trae el navegador de serie. De cambiarlo se encarga otro lenguaje: CSS. En la próxima lección lo escribirás; en esta aprenderás cómo se conecta con tu HTML.',
       'En un proyecto real el CSS vive en su propio archivo (por ejemplo `styles.css`) y el HTML lo enlaza con la etiqueta `<link rel="stylesheet" href="styles.css">`. Sin esa línea, el navegador ni se entera de que tu CSS existe.',
       'Aquí es donde el `<head>` deja de ser un cajón vacío: el `<link>` es información sobre la página (qué estilos usar), no contenido que se vea, así que va dentro de `<head>` — nunca en el `<body>`, con el resto del texto e imágenes.',
-      'En JSPlay lo que escribas en la pestaña CSS se aplica solo — el editor pone ese enlace por ti — pero fuera de aquí tendrás que escribirlo tú, y dentro de `<head>`. Añádelo ahora a tu HTML para que se te quede grabado.',
+      'En JSPlay lo que escribas en la pestaña styles.css se aplica solo — el editor pone ese enlace por ti — pero fuera de aquí tendrás que escribirlo tú, y dentro de `<head>`. Añádelo ahora a tu HTML para que se te quede grabado.',
     ].join('\n\n'),
     objectives: [
       {
@@ -156,7 +156,7 @@ export const module1 = [
     description: [
       'El CSS funciona con reglas, y cada regla tiene dos partes: un selector, que dice a qué elementos afecta, y entre llaves una lista de propiedades con sus valores. Así: `body { background-color: black; }` significa «al elemento body, ponle fondo negro». Cada propiedad termina en punto y coma.',
       'El selector más simple es el nombre de una etiqueta: `body` selecciona la página entera, `p` todos los párrafos, `h1` el título.',
-      'Ve a la pestaña CSS y dale a tu página un color de fondo con `background-color` y un color de letra con `color`. Puedes usar nombres en inglés (`black`, `tomato`, `lightblue`) o códigos como `#1e1e2f`.',
+      'Ve a la pestaña styles.css y dale a tu página un color de fondo con `background-color` y un color de letra con `color`. Puedes usar nombres en inglés (`black`, `tomato`, `lightblue`) o códigos como `#1e1e2f`.',
     ].join('\n\n'),
     objectives: [
       { label: 'La página (body) tiene un color de fondo', validate: hasBackgroundColor('body') },
@@ -166,7 +166,7 @@ export const module1 = [
       },
     ],
     hints: [
-      'Escribe en la pestaña CSS, no en la de HTML.',
+      'Escribe en la pestaña styles.css, no en la de index.html.',
       'body { background-color: #1e1e2f; }',
       'Dentro de las mismas llaves caben más propiedades: body { background-color: #1e1e2f; color: #ebdbb2; }',
     ],

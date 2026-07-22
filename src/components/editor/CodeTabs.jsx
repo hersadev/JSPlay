@@ -8,9 +8,9 @@ import { useSandboxStore } from '../../store/sandboxStore';
 import { syntaxErrorLinter } from './syntaxLinter';
 
 const TABS = [
-  { key: 'html', label: 'HTML', ext: html() },
-  { key: 'css', label: 'CSS', ext: css() },
-  { key: 'js', label: 'JavaScript', ext: javascript() },
+  { key: 'html', label: 'index.html', ext: html() },
+  { key: 'css', label: 'styles.css', ext: css() },
+  { key: 'js', label: 'script.js', ext: javascript() },
 ];
 
 export default function CodeTabs() {

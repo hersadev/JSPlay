@@ -183,7 +183,7 @@ export const module3 = [
     description: [
       'Toca volver a JavaScript, ahora aplicado a tu proyecto. Vas a añadir el clásico interruptor de tema claro/oscuro, que combina todo lo aprendido: HTML (un botón), CSS (los estilos del tema) y JS (reaccionar al clic).',
       'El CSS ya trae reglas para `body.claro`: solo se aplican cuando el body tiene esa clase. La pieza que falta es el evento: `boton.addEventListener("click", ...)` ejecuta una función en cada clic, y `document.body.classList.toggle("claro")` pone la clase si no está y la quita si está.',
-      'Añade en el `<header>` un `<button id="tema">` y, en la pestaña JS, haz que cada clic alterne la clase `claro` del body. Pruébalo en la vista previa.',
+      'Añade en el `<header>` un `<button id="tema">` y, en la pestaña script.js, haz que cada clic alterne la clase `claro` del body. Pruébalo en la vista previa.',
     ].join('\n\n'),
     objectives: [
       { label: 'Hay un botón #tema en la cabecera', validate: hasElement('header #tema') },

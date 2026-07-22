@@ -181,11 +181,13 @@ window.addEventListener('message', function (e) {
 document.addEventListener('click', function (e) {
   var el = e.target;
   while (el && el !== document) {
-    if (el.tagName === 'A' && el.getAttribute('href')) {
+    if (el.tagName === 'A' && el.hasAttribute('href')) {
       e.preventDefault();
-      var href = el.getAttribute('href');
+      var href = el.getAttribute('href') || '';
       if (/^(https?:)?\\/\\//i.test(href)) {
         window.open(href, '_blank', 'noopener,noreferrer');
+      } else if (href === '') {
+        console.warn('El enlace no tiene destino: el atributo href está vacío.');
       } else if (href.charAt(0) !== '#') {
         var suggestion = href.indexOf(':') === -1 ? ' Prueba con "https://' + href + '".' : '';
         console.warn('El enlace "' + href + '" no se abrió: la vista previa solo abre URLs completas (con "https://").' + suggestion);
@@ -227,8 +229,30 @@ function escapeInlineClosingTags(str) {
   return String(str).replace(/<\/(script|style)/gi, '<\\/$1');
 }
 
+// Etiquetas que solo tienen sentido dentro de <head>. El parser HTML5 del
+// navegador cierra <head> en cuanto ve el primer carácter de texto suelto
+// que no espera ahí (un solo carácter fuera de <html>...</html>, o incluso
+// dentro de <head> si rompe sin querer un comentario) y pasa a modo "in
+// body": todo lo que el alumno escribiera después pensando que iba a
+// <head> — <title>, <link>, <meta> — se cuela como hijo de <body> en su
+// lugar, sin ningún aviso. Es una rotura de verdad (el <title> deja de ser
+// el de la pestaña, un <link> puede acabar en un sitio inesperado del
+// documento), así que se recupera desde donde haya caído antes de servir
+// el documento — deliberadamente no se toca <script>, cuya posición sí
+// puede cambiar cuándo se ejecuta.
+const HEAD_ONLY_TAGS = ['title', 'link', 'meta', 'base', 'style'];
+
+function reclaimHeadContent(parsed) {
+  HEAD_ONLY_TAGS.forEach((tag) => {
+    parsed.body.querySelectorAll(tag).forEach((el) => {
+      parsed.head.appendChild(el);
+    });
+  });
+}
+
 export function buildSrcDoc({ html = '', css = '', js = '', storage = {} }) {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
+  reclaimHeadContent(parsed);
   let storageInit = '{}';
   try {
     storageInit = JSON.stringify(storage);

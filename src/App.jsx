@@ -48,7 +48,7 @@ const SANDBOX_STARTER = {
 const STUCK_ATTEMPT_THRESHOLD = 3; // pulsaciones seguidas de "Ver en web" sin avanzar antes de ofrecer ayuda
 
 export default function App() {
-  const { code, sandboxState, replaceCode } = useSandbox();
+  const { sandboxState, replaceCode } = useSandbox();
   const manualRenderTick = useSandboxStore((s) => s.manualRenderTick);
 
   // Nivel (sección) activo: cada nivel tiene su secuencia de lecciones, su
@@ -136,17 +136,34 @@ export default function App() {
   // Guardar el código en curso (con un pequeño debounce) bajo la lección
   // actual. En el módulo 1, además, extraer del HTML el nombre y la
   // presentación del jugador para reutilizarlos en lecciones posteriores.
+  //
+  // Se lee `code` directamente del store (como hace <Preview>) en vez de
+  // suscribirse a él con el hook reactivo: ese código no aparece en ningún
+  // JSX de App, solo se usa aquí dentro. Suscribirse igualmente forzaba un
+  // re-render de toda la app — LessonPanel, ConsolePanel, etc. — en cada
+  // pulsación de tecla del editor.
   useEffect(() => {
     if (!currentCodeKey) return;
-    const t = setTimeout(() => {
-      saveCode(currentCodeKey, code);
-      if (currentCodeKey.startsWith('m1-')) {
-        const profile = extractProfile(code.html);
-        if (profile) saveProfile(profile);
-      }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [code, currentCodeKey]);
+    let t;
+    const scheduleSave = (code) => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        saveCode(currentCodeKey, code);
+        if (currentCodeKey.startsWith('m1-')) {
+          const profile = extractProfile(code.html);
+          if (profile) saveProfile(profile);
+        }
+      }, 300);
+    };
+    scheduleSave(useSandboxStore.getState().code);
+    const unsubscribe = useSandboxStore.subscribe((state, prevState) => {
+      if (state.code !== prevState.code) scheduleSave(state.code);
+    });
+    return () => {
+      clearTimeout(t);
+      unsubscribe();
+    };
+  }, [currentCodeKey]);
 
   // Revalidar objetivos cada vez que cambia el resultado del sandbox, y de
   // paso detectar "atasco": si una pulsación de "Ver en web" (manualRenderTick
@@ -203,6 +220,11 @@ export default function App() {
     setShowSuccess(true);
     const timer = setTimeout(() => {
       setShowSuccess(false);
+      // Igual que en handleSwitchLevel: invalidar el sandboxState AQUÍ, antes
+      // de que suba lessonIndex, para que el efecto de objetivos de la
+      // lección nueva no valide por un instante contra el DOM de la lección
+      // que se acaba de completar.
+      useSandboxStore.getState().setSandboxState(null);
       setLessonIndex((i) => Math.min(i + 1, LESSONS.length));
     }, 2200);
 
@@ -255,12 +277,19 @@ export default function App() {
 
   function handleSelectLesson(index) {
     if (index > maxReached) return;
+    // Ver el comentario en handleSwitchLevel: sin esto, el efecto de
+    // objetivos podría validar la lección elegida contra el DOM de la
+    // lección anterior durante un instante.
+    useSandboxStore.getState().setSandboxState(null);
     setLessonIndex(index);
     setSandboxMode(false);
     setSelectorOpen(false);
   }
 
   function handleToggleSandbox() {
+    // Ídem: entrar o salir del sandbox cambia currentLesson igual que elegir
+    // otra lección, así que necesita la misma invalidación síncrona.
+    useSandboxStore.getState().setSandboxState(null);
     setSandboxMode((m) => !m);
     setSelectorOpen(false);
   }

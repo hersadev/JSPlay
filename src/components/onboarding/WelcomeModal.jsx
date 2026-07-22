@@ -93,7 +93,7 @@ export default function WelcomeModal({ onClose }) {
         </button>
 
         <p className="text-[11px] text-gray-500 text-center mt-3">
-          Empieza escribiendo tu primer <code className="text-gray-300">&lt;h1&gt;</code> en la pestaña HTML.
+          Empieza escribiendo tu primer <code className="text-gray-300">&lt;h1&gt;</code> en la pestaña index.html.
         </p>
       </motion.div>
     </motion.div>
