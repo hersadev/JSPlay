@@ -26,6 +26,14 @@ import { loadSandboxStorage, persistSandboxStorage } from '../../utils/persisten
 // cada clic suelto de la ráfaga.
 const ACTIVITY_DEBOUNCE_MS = 150;
 
+// Tope de entradas de consola/errores que se guardan. Sin límite, un bucle o
+// un setInterval al que se le olvida el clearInterval (un error muy típico
+// de principiante) llena la lista sin parar mientras el iframe siga vivo, y
+// con ella la lista que renderiza <ConsolePanel> — de tirón de memoria a
+// tirón de rendimiento del propio editor. Se descartan las entradas más
+// antiguas primero (ventana deslizante), de sobra para cualquier lección real.
+const MAX_CONSOLE_ENTRIES = 500;
+
 export default function Preview() {
   const iframeRef = useRef(null);
   const bridgeRef = useRef(null);
@@ -59,11 +67,11 @@ export default function Preview() {
       (msg) => {
         switch (msg.kind) {
           case 'console':
-            consoleLogRef.current = [...consoleLogRef.current, msg.entry];
+            consoleLogRef.current = [...consoleLogRef.current, msg.entry].slice(-MAX_CONSOLE_ENTRIES);
             publishState();
             break;
           case 'error':
-            errorsRef.current = [...errorsRef.current, msg.message];
+            errorsRef.current = [...errorsRef.current, msg.message].slice(-MAX_CONSOLE_ENTRIES);
             publishState();
             break;
           case 'activity':

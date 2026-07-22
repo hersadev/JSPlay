@@ -1,9 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export function useLessonProgress(lesson) {
   const [completedCount, setCompleted] = useState(0);
   const [warning, setWarning] = useState(null);
   const [prevLessonId, setPrevLessonId] = useState(lesson?.id);
+  // Cuántos objetivos, de izquierda a derecha, están ya confirmados para la
+  // lección actual. Una vez confirmado uno, se queda confirmado — no se
+  // vuelve a pedir su validate() en cada revalidación (ver checkObjective):
+  // por lo demás cada cambio de sandboxState repetía, desde el objetivo 0,
+  // ida-y-vuelta de postMessage ya resueltas antes, solo para llegar otra
+  // vez al mismo objetivo pendiente. Es también coherente con el resto de
+  // validadores (tagInSection, textNotEmpty…), que ya son permisivos con
+  // "lo dejaste bien en algún momento": el progreso no debería retroceder
+  // porque una lección posterior toque algo que ya sirvió.
+  const lockedCountRef = useRef(0);
 
   // Reset síncrono al cambiar de lección, durante el propio render. Si se
   // hiciera en un useEffect, habría un render intermedio donde isComplete
@@ -13,6 +23,7 @@ export function useLessonProgress(lesson) {
     setPrevLessonId(lesson?.id);
     setCompleted(0);
     setWarning(null);
+    lockedCountRef.current = 0;
   }
 
   // Devuelve (en una promesa) el recuento recién calculado, además de
@@ -27,16 +38,17 @@ export function useLessonProgress(lesson) {
     async (sandboxState) => {
       if (!lesson) return 0;
       const objectives = lesson.objectives ?? [];
-      let count = 0;
+      let count = Math.min(lockedCountRef.current, objectives.length);
       let nextWarning = null;
-      for (const obj of objectives) {
-        if (await obj.validate(sandboxState)) {
+      for (let i = count; i < objectives.length; i++) {
+        if (await objectives[i].validate(sandboxState)) {
           count++;
           continue;
         }
-        nextWarning = (await obj.warn?.(sandboxState)) ?? null;
+        nextWarning = (await objectives[i].warn?.(sandboxState)) ?? null;
         break;
       }
+      lockedCountRef.current = count;
       setCompleted(count);
       setWarning(nextWarning);
       return count;
