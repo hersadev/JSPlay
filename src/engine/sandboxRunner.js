@@ -41,6 +41,8 @@
 //     escuchar clics directamente dentro de un documento de otro origen, y
 //     necesita saber cuándo algo pudo cambiar (p. ej. un listener del propio
 //     alumno) para volver a comprobar los objetivos de la lección.
+import { guardLoops } from './loopGuard';
+
 const BRIDGE_TAG = '__jsplay__'; // debe coincidir con TAG en sandboxBridge.js
 
 const STORAGE_POLYFILL = `
@@ -79,6 +81,30 @@ const STORAGE_POLYFILL = `
     Object.defineProperty(window, 'localStorage', { value: api, configurable: true });
   } catch (e) {}
 })();
+`;
+
+// Guardia contra bucles sin condición de salida (ver loopGuard.js, que
+// envuelve cada cuerpo de for/while/do-while con una llamada a esta
+// función). Un bucle infinito de verdad llama a la guardia una y otra vez
+// sin pausa, así que dos llamadas seguidas quedan siempre a menos de 50ms
+// una de otra: el "presupuesto" de tiempo se cuenta desde la primera
+// llamada de esa racha. Si en cambio pasan más de 50ms entre una llamada y
+// la siguiente (el alumno pulsó un botón que dispara un bucle bastante
+// después de que cargara la página, por ejemplo), no es un bucle colgado:
+// es una racha nueva, y el presupuesto se reinicia — si no fuera así, un
+// bucle normal disparado 3 segundos después de cargar la vista previa
+// fallaría al instante solo por el tiempo ya transcurrido desde la carga.
+const LOOP_GUARD_SCRIPT = `
+var __jsplayLoopBudgetStart = 0;
+var __jsplayLoopLastCheck = 0;
+function __jsplayLoopGuard(line) {
+  var now = Date.now();
+  if (now - __jsplayLoopLastCheck > 50) __jsplayLoopBudgetStart = now;
+  __jsplayLoopLastCheck = now;
+  if (now - __jsplayLoopBudgetStart > 2000) {
+    throw new Error('Este bucle no termina (línea ' + line + '): lleva más de 2 segundos dando vueltas sin parar. Revisa la condición de salida — ¿cambia el contador en cada vuelta?');
+  }
+}
 `;
 
 const PROBE_SCRIPT = `
@@ -306,7 +332,7 @@ export function buildSrcDoc({ html = '', css = '', js = '', storage = {} }) {
     storageInit = '{}';
   }
   const safeCss = escapeInlineClosingTags(css);
-  const safeJs = escapeInlineClosingTags(js);
+  const safeJs = escapeInlineClosingTags(guardLoops(js));
   const safeStorageInit = escapeInlineClosingTags(storageInit);
   // El script del alumno va SUELTO, sin envolverlo en try/catch: un try{}
   // inyectado alrededor de su código crea un bloque que oculta sus propios
@@ -331,6 +357,7 @@ ${parsed.body.innerHTML}
 <script>window.__jsplayStorageInit = ${safeStorageInit};</script>
 <script>${STORAGE_POLYFILL}</script>
 <script>${PROBE_SCRIPT}</script>
+<script>${LOOP_GUARD_SCRIPT}</script>
 <script>
 `;
   const suffix = `
