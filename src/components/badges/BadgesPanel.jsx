@@ -1,7 +1,16 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 // Recibe la colección de logros del nivel activo: cada nivel tiene la suya.
 export default function BadgesPanel({ badges, earned, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const total = badges.length;
   const got = earned.size;
 
