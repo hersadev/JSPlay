@@ -12,10 +12,12 @@ import {
   attrNotEmpty,
   globalIsFunction,
   callFunction,
+  evalTrue,
   consoleHasType,
   consoleHasValue,
   consoleCountAtLeast,
   sourceIncludes,
+  queryTargetsElement,
   tagInSection,
   sectionExists,
 } from '../_helpers';
@@ -195,7 +197,7 @@ export const module2 = [
       { label: 'Llámala y muestra el resultado en consola', validate: consoleHasType('string') },
     ],
     hints: [
-      'Usa exactamente el nombre saludar, con la palabra function delante.',
+      'Usa exactamente el nombre saludar.',
       'function saludar() { return "¡Hola!"; }',
       'console.log(saludar()); — los paréntesis son los que la ejecutan.',
     ],
@@ -331,10 +333,13 @@ export const module2 = [
         validate: sourceIncludes('js', /this\.\w+/),
       },
       {
-        label: 'Llama a persona.presentarse() y muestra el texto en consola',
+        label: 'Llama a persona.presentarse() y muestra en consola el saludo con su nombre real',
         validate: async (s) =>
           (await sourceIncludes('js', /persona\.presentarse\s*\(\s*\)/)(s)) &&
-          (await consoleHasType('string')(s)),
+          (await consoleHasType('string')(s)) &&
+          (await evalTrue(
+            "typeof persona === 'object' && persona !== null && typeof persona.nombre === 'string' && typeof persona.presentarse === 'function' && persona.presentarse().includes(persona.nombre)"
+          )(s)),
       },
     ],
     hints: [
@@ -356,8 +361,8 @@ export const module2 = [
     ].join('\n\n'),
     objectives: [
       {
-        label: 'Selecciona el párrafo con querySelector("#mensaje")',
-        validate: sourceIncludes('js', /querySelector\(\s*['"]#mensaje['"]\s*\)/),
+        label: 'Selecciona el párrafo con querySelector (cualquier selector válido que apunte a él)',
+        validate: queryTargetsElement('js', '#mensaje'),
       },
       {
         label: 'Muestra su .textContent en la consola',
@@ -383,7 +388,7 @@ export const module2 = [
     objectives: [
       {
         label: 'Selecciona el párrafo con querySelector',
-        validate: sourceIncludes('js', /querySelector\(\s*['"]#mensaje['"]\s*\)/),
+        validate: queryTargetsElement('js', '#mensaje'),
       },
       {
         label: 'Cámbiale el texto con .textContent =',
